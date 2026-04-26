@@ -1,50 +1,70 @@
 # OpenApparatus for Unity
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![openupm](https://img.shields.io/badge/install-UPM-blue)](#installation)
 
 Unity Package Manager (UPM) package that consumes [`OpenApparatus.Core`](https://github.com/OpenApparatus/core) to procedurally generate reproducible navigation environments — multi-room floor plans, mazes, and behavioral-research apparatuses — directly inside Unity scenes.
 
-> 🚧 **Pre-scaffold.** Runtime + Editor asmdefs are in place; the actual `FloorPlanInstance` MonoBehaviour and Unity-side adapter ship in milestones **C1–C3**.
+## Quick start
 
-## Installation
+1. Clone [`openapparatus-core`](https://github.com/OpenApparatus/core.git) and this repo as siblings:
 
-Once published, install via UPM by adding to your project's `Packages/manifest.json`:
+   ```bash
+   git clone https://github.com/OpenApparatus/core.git openapparatus-core
+   git clone https://github.com/OpenApparatus/unity.git openapparatus-unity
+   ```
 
-```json
-{
-  "dependencies": {
-    "com.openapparatus.unity": "https://github.com/OpenApparatus/unity.git"
-  }
-}
-```
+2. Build and stage the Core DLL into `Plugins/`:
 
-Or from a local clone:
+   ```bash
+   # macOS / Linux
+   bash openapparatus-unity/build/publish-core-dll.sh
 
-```json
-{
-  "dependencies": {
-    "com.openapparatus.unity": "file:/absolute/path/to/openapparatus-unity"
-  }
-}
-```
+   # Windows (PowerShell)
+   .\openapparatus-unity\build\publish-core-dll.ps1
+   ```
 
-## How it relates to the other OpenApparatus repos
+3. Add the package to a Unity project's `Packages/manifest.json`:
 
-This package is a **thin Unity adapter** over the engine-agnostic core library. The actual generation logic lives in [`OpenApparatus.Core`](https://github.com/OpenApparatus/core); this repo's job is:
+   ```json
+   {
+     "dependencies": {
+       "com.openapparatus.unity": "file:../path/to/openapparatus-unity"
+     }
+   }
+   ```
 
-1. Bundle `OpenApparatus.Core.dll` (built from the Core repo) in `Plugins/`.
-2. Provide a `FloorPlanInstance` MonoBehaviour that drives generation in the editor.
-3. Convert engine-agnostic `MeshData` → `UnityEngine.Mesh` for rendering.
-4. Provide a custom inspector with Generate / Reseed / Clear buttons and live regeneration on parameter change.
+   …or copy `openapparatus-unity` into your project's `Packages/` folder directly.
 
-If you're not using Unity, see:
-- **[OpenApparatus/studio](https://github.com/OpenApparatus/studio)** — cross-platform desktop app for authoring floor plans
-- **[OpenApparatus/core](https://github.com/OpenApparatus/core)** — the underlying .NET library
+4. Drop a **FloorPlanInstance** component onto an empty GameObject. Tweak any field in the inspector — the floor plan rebuilds live.
+
+## What ships
+
+| Path | What it is |
+|---|---|
+| `Plugins/OpenApparatus.Core.dll` | The engine-agnostic Core library (built by the publish script) |
+| `Runtime/FloorPlanInstance.cs` | MonoBehaviour driving generation; owns the spawned children |
+| `Runtime/UnityMeshAdapter.cs` | Converts engine-agnostic `MeshData` → `UnityEngine.Mesh` |
+| `Editor/FloorPlanInstanceEditor.cs` | Custom inspector with Generate / Reseed / Clear buttons |
+
+## How it works
+
+`FloorPlanInstance` is a thin Unity adapter:
+
+1. Reads its own parameters (floor dimensions, rectangle count, wall thickness/height, door dimensions, seed, materials).
+2. Calls `OpenApparatus.Core` to generate a `FloorPlan` and assemble per-cell meshes.
+3. Spawns one child GameObject per cell with a `MeshFilter` + `MeshRenderer`.
+4. Each cell mesh has three submeshes — `0=Floor`, `1=Walls`, `2=Ceiling` — and the inspector's three Material slots map to them in that order.
+
+In the editor, every parameter change debounces into one rebuild via `OnValidate` + `EditorApplication.delayCall`. Toggle `autoRegenerateInEditor` off to disable that and use the Generate button instead.
 
 ## Unity compatibility
 
-Targets Unity **2022.3 LTS** and newer. The bundled Core library is built against `netstandard2.1`.
+Targets **Unity 2022.3 LTS** and newer. The bundled Core DLL is built against `netstandard2.1`.
+
+## Related repos
+
+- **[OpenApparatus/core](https://github.com/OpenApparatus/core)** — the engine-agnostic .NET library
+- **[OpenApparatus/studio](https://github.com/OpenApparatus/studio)** — cross-platform desktop authoring app
 
 ## License
 
