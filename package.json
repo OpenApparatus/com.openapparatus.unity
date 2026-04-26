@@ -1,0 +1,21 @@
+{
+  "name": "com.openapparatus.unity",
+  "version": "0.1.0",
+  "displayName": "OpenApparatus",
+  "description": "Procedurally generate reproducible navigation environments — multi-room floor plans, mazes, and behavioral-research apparatuses — directly in Unity scenes. Wraps the engine-agnostic OpenApparatus.Core library.",
+  "unity": "2022.3",
+  "author": {
+    "name": "OpenApparatus"
+  },
+  "keywords": [
+    "procedural",
+    "navigation",
+    "neuroscience",
+    "behavioral-research",
+    "level-generation",
+    "editor-tool"
+  ],
+  "documentationUrl": "https://github.com/OpenApparatus/unity",
+  "changelogUrl": "https://github.com/OpenApparatus/unity/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/OpenApparatus/unity/blob/main/LICENSE"
+}

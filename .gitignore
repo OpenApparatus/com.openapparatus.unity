@@ -1,0 +1,30 @@
+# UPM package — installed inside other Unity projects' Packages/ directory.
+# This .gitignore covers only what's relevant when developing the package itself.
+
+# Build outputs
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+*.log
+
+# Plugins/ contents are produced by the Core build (DLL drop). Track the directory
+# but not the binaries on day one — uncomment the next line if you want to commit
+# specific DLL versions. For now, build provides them.
+# Plugins/*.dll
+# Plugins/*.pdb
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.DotSettings.user
+
+# OS
+.DS_Store
+Thumbs.db
