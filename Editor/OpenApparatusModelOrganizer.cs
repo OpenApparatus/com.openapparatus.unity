@@ -8,11 +8,14 @@ namespace OpenApparatus.EditorTools
     /// Reorganizes an imported OpenApparatus OBJ so each room's floor / ceiling /
     /// wall meshes sit under a per-room parent GameObject. Unity's built-in OBJ
     /// importer flattens every group into siblings under the model root; this
-    /// post-processes that flat hierarchy into one parent per room.
+    /// rebuilds per-room hierarchy.
     ///
-    /// Usage: select the imported model's root GameObject in the scene (the one
-    /// whose children are named `room_0_floor`, `room_0_wall_1`, etc.) and run
-    /// GameObject → OpenApparatus → Group by Room.
+    /// • Automatic: <see cref="OpenApparatusModelPostprocessor"/> runs on every
+    ///   model import — if the model's children match the OpenApparatus naming
+    ///   pattern (`room_&lt;id&gt;_*`) the hierarchy is grouped at import time.
+    /// • Manual: select an imported model's root in the scene and run
+    ///   GameObject → OpenApparatus → Group by Room (useful when re-importing
+    ///   or working with a model placed before the postprocessor was added).
     /// </summary>
     public static class OpenApparatusModelOrganizer
     {
@@ -26,7 +29,7 @@ namespace OpenApparatus.EditorTools
             var root = command.context as GameObject;
             if (root == null || command.context != Selection.activeObject) return;
 
-            int grouped = Apply(root);
+            int grouped = Apply(root, registerUndo: true);
             if (grouped == 0)
             {
                 EditorUtility.DisplayDialog(
@@ -48,8 +51,11 @@ namespace OpenApparatus.EditorTools
         /// <summary>
         /// Reparents children of <paramref name="root"/> matching `room_&lt;id&gt;_*`
         /// under per-room parents. Returns the number of room parents created.
+        /// Pass <c>registerUndo: false</c> when called during asset import — the
+        /// imported GameObject is not yet a scene object and Undo registration
+        /// is meaningless (and may throw).
         /// </summary>
-        public static int Apply(GameObject root)
+        public static int Apply(GameObject root, bool registerUndo = false)
         {
             if (root == null) return 0;
 
@@ -67,7 +73,8 @@ namespace OpenApparatus.EditorTools
             }
             if (byRoom.Count == 0) return 0;
 
-            Undo.RegisterFullObjectHierarchyUndo(root, "Group by Room");
+            if (registerUndo)
+                Undo.RegisterFullObjectHierarchyUndo(root, "Group by Room");
 
             // Sort room ids so the new parents appear in stable order.
             var ids = new List<int>(byRoom.Keys);
@@ -85,19 +92,23 @@ namespace OpenApparatus.EditorTools
                 else
                 {
                     parent = new GameObject(parentName);
-                    Undo.RegisterCreatedObjectUndo(parent, "Group by Room");
+                    if (registerUndo)
+                        Undo.RegisterCreatedObjectUndo(parent, "Group by Room");
                     parent.transform.SetParent(root.transform, worldPositionStays: false);
                 }
 
                 foreach (var child in byRoom[id])
                 {
-                    Undo.SetTransformParent(child, parent.transform, "Group by Room");
+                    if (registerUndo)
+                        Undo.SetTransformParent(child, parent.transform, "Group by Room");
+                    else
+                        child.SetParent(parent.transform, worldPositionStays: true);
                 }
             }
             return byRoom.Count;
         }
 
-        static bool TryParseRoomId(string name, out int id)
+        internal static bool TryParseRoomId(string name, out int id)
         {
             id = -1;
             const string prefix = "room_";
@@ -105,6 +116,35 @@ namespace OpenApparatus.EditorTools
             int sep = name.IndexOf('_', prefix.Length);
             if (sep < 0) return false;
             return int.TryParse(name.Substring(prefix.Length, sep - prefix.Length), out id);
+        }
+    }
+
+    /// <summary>
+    /// Auto-runs <see cref="OpenApparatusModelOrganizer.Apply"/> on every model
+    /// import where the children match the OpenApparatus naming pattern. Models
+    /// from other tools are left untouched.
+    /// </summary>
+    sealed class OpenApparatusModelPostprocessor : AssetPostprocessor
+    {
+        void OnPostprocessModel(GameObject root)
+        {
+            if (root == null) return;
+
+            // Cheap pattern check — only proceed if at least one direct child
+            // has the OpenApparatus name shape. Avoids touching unrelated FBX /
+            // OBJ imports that happen to share a project.
+            bool looksLikeOurs = false;
+            foreach (Transform child in root.transform)
+            {
+                if (OpenApparatusModelOrganizer.TryParseRoomId(child.name, out _))
+                {
+                    looksLikeOurs = true;
+                    break;
+                }
+            }
+            if (!looksLikeOurs) return;
+
+            OpenApparatusModelOrganizer.Apply(root);
         }
     }
 }
