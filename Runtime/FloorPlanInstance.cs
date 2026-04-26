@@ -20,13 +20,16 @@ namespace OpenApparatus.Unity
     [ExecuteAlways]
     public class FloorPlanInstance : MonoBehaviour
     {
+        public enum StartingRoomTypeChoice { NoPreference, Square, Rectangle }
+
         [Header("Floor dimensions")]
         [Min(1)] public int floorWidthCells = 4;
-        [Min(1)] public int floorHeightCells = 4;
+        [Min(1)] public int floorLengthCells = 4;
         [Min(0.5f)] public float tileSize = 3.5f;
 
         [Header("Rooms")]
         [Min(0)] public int rectangleRoomCount = 0;
+        public RectangleOrientation rectangleOrientation = RectangleOrientation.Random;
 
         [Header("Walls")]
         [Min(0.05f)] public float wallThickness = 0.2f;
@@ -34,6 +37,7 @@ namespace OpenApparatus.Unity
 
         [Header("Doorways")]
         public bool includeOuterEntrance = true;
+        public StartingRoomTypeChoice startingRoomType = StartingRoomTypeChoice.NoPreference;
         [Min(0.5f)] public float doorWidth = 1.2f;
         [Min(1.5f)] public float doorHeight = 2.2f;
 
@@ -101,9 +105,10 @@ namespace OpenApparatus.Unity
                 var gen = new GridDominoGenerator
                 {
                     FloorWidthCells = floorWidthCells,
-                    FloorHeightCells = floorHeightCells,
+                    FloorLengthCells = floorLengthCells,
                     RectangleRoomCount = rectangleRoomCount,
                     TileSize = tileSize,
+                    Orientation = rectangleOrientation,
                 };
                 plan = gen.Generate(new SeededRandom(seed));
                 new SpanningTreePassageAssigner
@@ -111,6 +116,12 @@ namespace OpenApparatus.Unity
                     IncludeOuterEntrance = includeOuterEntrance,
                     DoorWidth = doorWidth,
                     DoorHeight = doorHeight,
+                    PreferEntranceRoomType = startingRoomType switch
+                    {
+                        StartingRoomTypeChoice.Square => RoomType.Square,
+                        StartingRoomTypeChoice.Rectangle => RoomType.Rectangle,
+                        _ => null,
+                    },
                 }.Assign(plan, new SeededRandom(seed));
             }
             catch (System.Exception ex)
