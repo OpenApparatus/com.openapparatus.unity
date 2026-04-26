@@ -5,15 +5,15 @@ using OpenApparatus.Unity;
 namespace OpenApparatus.Unity.Editor
 {
     /// <summary>
-    /// Custom inspector for <see cref="FloorPlanInstance"/>. Adds a Generate /
+    /// Custom inspector for <see cref="MultiRoomEnvironmentInstance"/>. Adds a Generate /
     /// Reseed / Clear button row above the default field listing.
     /// </summary>
-    [CustomEditor(typeof(FloorPlanInstance))]
-    public class FloorPlanInstanceEditor : UnityEditor.Editor
+    [CustomEditor(typeof(MultiRoomEnvironmentInstance))]
+    public class MultiRoomEnvironmentInstanceEditor : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {
-            var inst = (FloorPlanInstance)target;
+            var inst = (MultiRoomEnvironmentInstance)target;
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Actions", EditorStyles.boldLabel);

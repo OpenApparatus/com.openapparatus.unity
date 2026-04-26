@@ -12,13 +12,13 @@ namespace OpenApparatus.Unity
 {
     /// <summary>
     /// Drop this component on an empty GameObject, configure parameters, and
-    /// the component spawns one child GameObject per generated cell with a
+    /// the component spawns one child GameObject per generated room with a
     /// MeshFilter + MeshRenderer. Live-regenerates in the editor whenever
     /// any parameter changes.
     /// </summary>
     [DisallowMultipleComponent]
     [ExecuteAlways]
-    public class FloorPlanInstance : MonoBehaviour
+    public class MultiRoomEnvironmentInstance : MonoBehaviour
     {
         public enum StartingRoomTypeChoice { NoPreference, Square, Rectangle }
 
@@ -99,7 +99,7 @@ namespace OpenApparatus.Unity
             if (existing != null) DestroyImmediate(existing.gameObject);
 #endif
 
-            FloorPlan plan;
+            MultiRoomEnvironment plan;
             try
             {
                 var gen = new GridDominoGenerator
@@ -126,11 +126,11 @@ namespace OpenApparatus.Unity
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"[FloorPlanInstance] Generation failed: {ex.Message}", this);
+                Debug.LogError($"[MultiRoomEnvironmentInstance] Generation failed: {ex.Message}", this);
                 return;
             }
 
-            var meshes = new FloorPlanMeshAssembler().Assemble(plan, wallThickness, wallHeight);
+            var meshes = new MultiRoomEnvironmentMeshAssembler().Assemble(plan, wallThickness, wallHeight);
 
             var root = new GameObject(GeneratedChildName);
 #if UNITY_EDITOR
@@ -159,12 +159,12 @@ namespace OpenApparatus.Unity
 
         void SpawnCell(Transform parent, AssembledCellMesh assembled)
         {
-            var go = new GameObject($"Cell_{assembled.Cell.Id}_{assembled.Cell.RoomType}",
+            var go = new GameObject($"Cell_{assembled.Room.Id}_{assembled.Room.RoomType}",
                 typeof(MeshFilter), typeof(MeshRenderer));
             go.transform.SetParent(parent, false);
 
             var mesh = UnityMeshAdapter.ToUnityMesh(assembled.Mesh,
-                $"FloorPlan_Cell_{assembled.Cell.Id}");
+                $"FloorPlan_Cell_{assembled.Room.Id}");
             go.GetComponent<MeshFilter>().sharedMesh = mesh;
 
             var mr = go.GetComponent<MeshRenderer>();
@@ -173,7 +173,7 @@ namespace OpenApparatus.Unity
             mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
 
 #if UNITY_EDITOR
-            Undo.RegisterCreatedObjectUndo(go, "Regenerate Floor Plan Cell");
+            Undo.RegisterCreatedObjectUndo(go, "Regenerate Floor Plan Room");
 #endif
         }
     }
