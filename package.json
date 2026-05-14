@@ -19,6 +19,14 @@
   "changelogUrl": "https://github.com/OpenApparatus/unity/blob/main/CHANGELOG.md",
   "licensesUrl": "https://github.com/OpenApparatus/unity/blob/main/LICENSE",
   "dependencies": {
-    "com.unity.cloud.gltfast": "6.0.0"
-  }
+    "com.unity.cloud.gltfast": "6.0.0",
+    "com.unity.nuget.newtonsoft-json": "3.2.1"
+  },
+  "samples": [
+    {
+      "displayName": "Imported Environment",
+      "description": "Drag-and-drop demo: import a Studio JSON export and spawn it.",
+      "path": "Samples~/ImportedEnvironment"
+    }
+  ]
 }
