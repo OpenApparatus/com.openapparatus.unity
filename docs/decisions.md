@@ -224,3 +224,64 @@ in the roadmap owns that PR. Until it lands, the Wave 2 JSON importer
 falls back to structural sniff.
 
 When this ADR is accepted, restate it as "Accepted" with the date.
+
+## ADR-0007: Studio-local HTTP API rather than shared library or cloud service
+
+**Status:** Accepted, 2026-05-14.
+
+**Context.** Both Unity and Studio need to turn an OpenApparatus JSON
+environment into a glTF binary. The Studio repo already has a
+`GltfExporter`; Unity does not. Three delivery options:
+
+1. **Shared library.** Multi-target `OpenApparatus.IO` to
+   netstandard2.1, ship the DLL with the Unity package, both consumers
+   link against the same code in-process.
+2. **Cloud HTTP API.** Host the converter on a public endpoint; Unity
+   and Studio both POST JSON, download GLB.
+3. **Studio-local HTTP API.** Studio embeds a tiny `HttpListener` bound
+   to `127.0.0.1`. Unity discovers the port via a JSON file Studio
+   writes at startup, then makes ordinary HTTP calls. Same machine,
+   loopback only.
+
+**Decision.** Option 3 — Studio-local HTTP API. Contract documented in
+[studio-api-contract.md](studio-api-contract.md).
+
+**Why.** Research workstations are single-user, often air-gapped or on
+flaky lab WiFi, frequently subject to IRB / DSGVO constraints that
+prohibit uploading participant data to third-party services. The
+natural workflow (export from Studio, import into Unity) implies
+Studio is already running when Unity needs to call the converter, so
+"Studio must be running" isn't a new requirement. Loopback transport
+eliminates the cloud option's hosting cost, latency, auth, and privacy
+costs without inheriting the shared-library option's multi-targeting
+and DLL distribution burden.
+
+**Why not option 1 (shared library).** Forces `OpenApparatus.IO` to
+multi-target net8 and netstandard2.1 and audit every dependency for
+netstandard2.1 compatibility. Tightly couples Unity package versions
+to Core versions. Solves a real problem (in-process speed) but at a
+high coordination cost across three repos.
+
+**Why not option 2 (cloud).** Requires hosting infrastructure, auth,
+rate limiting, monitoring; introduces a network dependency for a
+fundamentally offline workflow; raises ethics-review questions about
+participant data leaving the workstation. A cloud service can be
+layered on top of the Studio-local API later if batch processing or
+remote collaboration becomes a real need — both share the same
+endpoint contract, only the transport address differs.
+
+**Consequences.**
+- Studio must implement a small HTTP server. Trivial via `HttpListener`
+  (no external dependencies).
+- Unity must implement a discovery-file reader and HTTP client. Also
+  trivial via BCL `HttpClient`.
+- When Studio isn't running, Unity falls back to a "please launch
+  Studio" prompt. Less elegant than in-process but matches the
+  workflow.
+- The contract is the single source of truth across both repos.
+  Breaking changes require coordinated `/v1/` → `/v2/` migration.
+- A hosted cloud variant of the same API is a future option, not a
+  blocker. The endpoint contract is identical; only the transport
+  address differs. Adding it would slot in as a `RemoteGltfConverter`
+  alongside today's `StudioGltfConverter` without breaking either
+  consumer.
