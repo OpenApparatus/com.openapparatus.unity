@@ -54,10 +54,24 @@ Runtime/
 │   ├── RoomObjectInstance.cs    ← MonoBehaviour
 │   └── OpeningSpec.cs           ← [Serializable] POCO
 ├── Assets/
-│   └── MultiRoomEnvironmentAsset.cs   ← ScriptableObject, [CreateAssetMenu] omitted
+│   ├── MultiRoomEnvironmentAsset.cs   ← ScriptableObject, [CreateAssetMenu] omitted
+│   ├── PrefabSubstitutionTable.cs     ← ScriptableObject; schema in conventions.md
+│   └── SubstitutionEntry.cs           ← [Serializable] struct; schema in conventions.md
+├── Enums/
+│   └── ColliderMode.cs          ← enum None/WallsOnly/FloorsOnly/All
 └── Internal/
     └── OpenApparatusSpace.cs    ← static class
 ```
+
+`MultiRoomEnvironmentAsset` carries two fields introduced here (implemented by tasks I and J):
+
+```csharp
+public ColliderMode ColliderMode;
+public PrefabSubstitutionTable Substitution;   // null = no substitution
+```
+
+Ship them with default values (`ColliderMode.None`, `null`). Tasks I and J
+read these at spawn time; they compile and do nothing until those tasks land.
 
 Exact field lists are in
 [conventions.md § component schemas](../conventions.md#component-schemas).

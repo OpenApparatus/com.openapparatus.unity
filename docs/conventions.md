@@ -108,6 +108,27 @@ public sealed class RoomObjectInstance : MonoBehaviour
     public int OwningRoomId;
     public float LocalRotationY;       // radians
 }
+
+public enum ColliderMode { None, WallsOnly, FloorsOnly, All }
+
+// MultiRoomEnvironmentAsset carries these two fields (added for tasks I and J):
+//   public ColliderMode ColliderMode;
+//   public PrefabSubstitutionTable Substitution;   // null = no substitution
+
+public sealed class PrefabSubstitutionTable : ScriptableObject
+{
+    public SubstitutionEntry[] Entries;
+}
+
+[Serializable]
+public struct SubstitutionEntry
+{
+    public string ObjectType;           // matches ObjectSlotDefinition.ObjectType
+    public GameObject Prefab;
+    public Vector3 PositionOffset;      // local, applied after placement
+    public float RotationOffsetYDegrees;
+    public Vector3 ScaleMultiplier;     // Vector3.one = no change
+}
 ```
 
 If a Wave 2 task needs a field not in this list, add it here first via

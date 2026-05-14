@@ -43,6 +43,8 @@ Update the box to `x` when the PR for a task is merged.
 | D — Samples + demo scene | 2 | | | [ ] |
 | E — Test skeleton + CI | 2 | | | [ ] |
 | G — Studio JSON v4 discriminator | 2 | | | [ ] |
+| I — Collider generation | 2 | | | [ ] |
+| J — Prefab substitution | 2 | | | [ ] |
 | C — .oapp project importer | 3 | | | [ ] |
 | H — Integration tests + polish | 3 | | | [ ] |
 
@@ -71,11 +73,22 @@ Independent files:
 - D → `Samples~/ImportedEnvironment/`, `package.json` (`samples` block)
 - E → `Tests/Editor/`, `.github/workflows/test.yml`
 - G → `openapparatus-core/src/OpenApparatus.IO/Exporters/JsonExporter.cs` (different repo)
+- I → `Editor/Internal/ColliderBuilder.cs`
+- J → `Runtime/Assets/PrefabSubstitutionTable.cs`, `Runtime/Assets/SubstitutionEntry.cs`,
+      `Editor/Internal/PrefabSubstitutionApplicator.cs`,
+      `Editor/Inspectors/PrefabSubstitutionTableEditor.cs`
 
 Shared touch-point: `Tests/Fixtures/`. If A and B both add fixtures,
 they may compete on naming. Task briefs prescribe distinct fixture
 names (`single_room.json` for A, `single_room.glb` for B) so this
 doesn't blow up.
+
+Tasks I and J both call into the spawn sequence that task A introduces.
+They read the spawned `Wall`, `Room`, and `RoomObjectInstance`
+components; they do not modify the importer itself. The touch-point is
+`MultiRoomEnvironmentAsset` (F2), whose two new fields (`ColliderMode`,
+`Substitution`) are the only shared state. F2 ships those fields as
+inert defaults; I and J activate them.
 
 ### Wave 3
 
@@ -111,6 +124,10 @@ against a real Studio export.
   least one JSON fixture.
 - `JsonExporter.SchemaVersion = 4` in core, and the JSON importer
   recognises both v3 (sniff) and v4 (marker).
+- Spawning with `ColliderMode.All` produces `BoxCollider` components
+  on every `Wall` child and every room floor tile.
+- Spawning with a `PrefabSubstitutionTable` replaces the matched
+  placeholder objects with the specified prefabs, offsets applied.
 
 **Wave 3 done when:**
 
@@ -136,14 +153,16 @@ based on the brief, not a contractual commitment.
 | D | 0.5 day |
 | E | 1 day |
 | G | 0.5 day (cross-repo) |
+| I | 0.5 day |
+| J | 1 day |
 | H | 1 day |
 
 Wave 1 wall-clock: ~1.5 days (with three parallel agents on the longest
-task). Wave 2 wall-clock: ~2 days (with five parallel agents on the
-longest task). Wave 3 wall-clock: ~3 days sequential.
+task). Wave 2 wall-clock: ~2 days (A is still the critical path; I and
+J are shorter and fit within it). Wave 3 wall-clock: ~3 days sequential.
 
 Total wall-clock with full parallelisation: ~6–7 days. Total
-agent-days of work: ~11.
+agent-days of work: ~13.5.
 
 ## Cross-cutting concerns
 
