@@ -1,0 +1,627 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>OpenApparatus.Core</name>
+    </assembly>
+    <members>
+        <member name="T:OpenApparatus.Bounds2D">
+            <summary>
+            An axis-aligned bounding box in the 2D XZ plane. Used for room-local outline
+            extents, world-space floor-plan extents, and quick adjacency screening.
+            </summary>
+        </member>
+        <member name="M:OpenApparatus.Bounds2D.Contains(System.Numerics.Vector2)">
+            <summary>True if <paramref name="point"/> is within these bounds (inclusive).</summary>
+        </member>
+        <member name="M:OpenApparatus.Bounds2D.Union(OpenApparatus.Bounds2D,OpenApparatus.Bounds2D)">
+            <summary>Smallest bounds containing both inputs.</summary>
+        </member>
+        <member name="M:OpenApparatus.Bounds2D.Encapsulate(System.Numerics.Vector2)">
+            <summary>Smallest bounds containing the original plus <paramref name="point"/>.</summary>
+        </member>
+        <member name="T:OpenApparatus.EdgeSegment">
+             <summary>
+             A directed line segment in the 2D XZ plane. Used as the unit of room-outline
+             description and inter-room adjacency: one edge of a room outline, or the
+             shared boundary between two rooms.
+            
+             Direction matters: walking from <see cref="P:OpenApparatus.EdgeSegment.Start"/> to <see cref="P:OpenApparatus.EdgeSegment.End"/>, the
+             "inside" of the room or adjacency is on the left (CCW outline convention).
+             </summary>
+        </member>
+        <member name="P:OpenApparatus.EdgeSegment.Direction">
+            <summary>Unit vector from Start toward End. Undefined for zero-length segments.</summary>
+        </member>
+        <member name="P:OpenApparatus.EdgeSegment.Normal">
+            <summary>
+            Unit vector 90° counter-clockwise from <see cref="P:OpenApparatus.EdgeSegment.Direction"/>. For an outline
+            edge ordered CCW around the room, this normal points OUTWARD (away from the room's
+            interior). For an adjacency segment with RoomA on the left, it points toward RoomB.
+            </summary>
+        </member>
+        <member name="M:OpenApparatus.EdgeSegment.Reversed">
+            <summary>Returns the same segment with Start and End swapped (and Direction/Normal flipped).</summary>
+        </member>
+        <member name="T:OpenApparatus.Geometry.AssembledRoomMesh">
+            <summary>
+            One room's combined mesh as produced by <see cref="T:OpenApparatus.Geometry.MultiRoomEnvironmentMeshAssembler"/>:
+            the original <see cref="T:OpenApparatus.Topology.Room"/> alongside its assembled <see cref="T:OpenApparatus.Geometry.MeshData"/>
+            (floor + ceiling + assigned walls, one per submesh).
+            </summary>
+        </member>
+        <member name="M:OpenApparatus.Geometry.AssembledRoomMesh.#ctor(OpenApparatus.Topology.Room,OpenApparatus.Geometry.MeshData)">
+            <summary>
+            One room's combined mesh as produced by <see cref="T:OpenApparatus.Geometry.MultiRoomEnvironmentMeshAssembler"/>:
+            the original <see cref="T:OpenApparatus.Topology.Room"/> alongside its assembled <see cref="T:OpenApparatus.Geometry.MeshData"/>
+            (floor + ceiling + assigned walls, one per submesh).
+            </summary>
+        </member>
+        <member name="T:OpenApparatus.Geometry.BoundaryWallBuilder">
+             <summary>
+             Builds wall geometry for one <see cref="T:OpenApparatus.Topology.Adjacency"/>. The wall is a thick
+             slab centered on the adjacency's <see cref="P:OpenApparatus.Topology.Adjacency.SharedSegment"/>, split
+             equally on each side of the segment, running from y=0 to the requested height.
+            
+             Output:
+               • <see cref="T:OpenApparatus.Topology.Passage.Closed"/>  → 6-face closed wall slab in submesh
+                                                 <see cref="F:OpenApparatus.Geometry.SubmeshIndex.Walls"/>.
+               • <see cref="T:OpenApparatus.Topology.Passage.Open"/>    → empty MeshData (no geometry).
+               • <see cref="T:OpenApparatus.Topology.Passage.Doorway"/> → wall slab with rectangular tunnel
+                                                 through the full thickness.
+            
+             All output is written to submesh <see cref="F:OpenApparatus.Geometry.SubmeshIndex.Walls"/>; the
+             returned mesh has <see cref="F:OpenApparatus.Geometry.SubmeshIndex.Count"/> submeshes (Floor and
+             Ceiling submeshes are present but empty), so it can be combined with
+             per-room interior MeshData in the assembler.
+             </summary>
+        </member>
+        <member name="M:OpenApparatus.Geometry.BoundaryWallBuilder.EmitClosedWallFaces(OpenApparatus.Geometry.MeshDataBuilder,OpenApparatus.Geometry.BoundaryWallBuilder.SlabFrame,System.Single)">
+            <summary>Emits the 6 faces of a fully-closed wall slab.</summary>
+        </member>
+        <member name="M:OpenApparatus.Geometry.BoundaryWallBuilder.EmitFullHeightSection(OpenApparatus.Geometry.MeshDataBuilder,OpenApparatus.Geometry.BoundaryWallBuilder.SlabFrame,System.Single,System.Single,System.Single)">
+            <summary>Emits the CellA + CellB face of a full-height wall section [xStart, xEnd] × [0, h].</summary>
+        </member>
+        <member name="M:OpenApparatus.Geometry.BoundaryWallBuilder.EmitLintel(OpenApparatus.Geometry.MeshDataBuilder,OpenApparatus.Geometry.BoundaryWallBuilder.SlabFrame,System.Single,System.Single,System.Single,System.Single)">
+            <summary>Emits CellA + CellB faces for a lintel — wall section [xStart, xEnd] × [yBot, yTop].</summary>
+        </member>
+        <member name="M:OpenApparatus.Geometry.BoundaryWallBuilder.EmitBottomStrip(OpenApparatus.Geometry.MeshDataBuilder,OpenApparatus.Geometry.BoundaryWallBuilder.SlabFrame,System.Single,System.Single)">
+            <summary>Emits the bottom face strip [xStart, xEnd] at y=0 (normal -Y).</summary>
+        </member>
+        <member name="T:OpenApparatus.Geometry.BoundaryWallBuilder.SlabFrame">
+            <summary>
+            A coordinate frame for a wall slab: an origin (segment start), a "direction"
+            axis along the segment, a "normal" axis perpendicular to it (in XZ, +N = RoomA side),
+            and a length. <see cref="M:OpenApparatus.Geometry.BoundaryWallBuilder.SlabFrame.Corner(System.Boolean,System.Single,System.Single)"/> turns slab-local (along, height, side) into world XYZ.
+            </summary>
+        </member>
+        <member name="M:OpenApparatus.Geometry.BoundaryWallBuilder.SlabFrame.Corner(System.Boolean,System.Single,System.Single)">
+            <summary>
+            World position of a slab corner. <paramref name="cellASide"/> picks the +N/-N face;
+            <paramref name="along"/> is the distance from the segment start along the wall;
+            <paramref name="height"/> is the world Y.
+            </summary>
+        </member>
+        <member name="T:OpenApparatus.Geometry.IShapeGeometryBuilder">
+             <summary>
+             Strategy that builds a thick-walled room mesh from a <see cref="T:OpenApparatus.Topology.Room"/> shape.
+             One implementation per <see cref="T:OpenApparatus.Topology.IRoomShape"/> kind (e.g. <see cref="T:OpenApparatus.Topology.RectangleShape"/>).
+            
+             The result is a <see cref="T:OpenApparatus.Geometry.MeshData"/> with three submeshes
+             (<see cref="F:OpenApparatus.Geometry.SubmeshIndex.Floor"/>, <see cref="F:OpenApparatus.Geometry.SubmeshIndex.Walls"/>,
+             <see cref="F:OpenApparatus.Geometry.SubmeshIndex.Ceiling"/>).
+            
+             In v1 the builder produces a fully-closed room — every wall present, no doorways.
+             Doorways and shared-wall ownership are introduced in milestone A3 and onward.
+             </summary>
+        </member>
+        <member name="M:OpenApparatus.Geometry.IShapeGeometryBuilder.Build(OpenApparatus.Topology.Room,System.Single,System.Single)">
+            <summary>
+            Build the geometry for one room.
+            </summary>
+            <param name="room">The room to mesh. Its <see cref="P:OpenApparatus.Topology.Room.Shape"/> must match
+            the implementation's expected shape type.</param>
+            <param name="wallThickness">Wall thickness, taken inward from the room's footprint
+            (so the visible interior is (W − 2t) × (D − 2t) for a rectangle).</param>
+            <param name="wallHeight">Height of the wall in world units. Floor at y=0,
+            ceiling at y=wallHeight.</param>
+        </member>
+        <member name="T:OpenApparatus.Geometry.MeshData">
+             <summary>
+             Engine-agnostic mesh representation. Consumers (Unity adapter, Avalonia
+             studio's OBJ export, etc.) convert this into their respective renderable type.
+            
+             Vertex attributes are parallel arrays (vertex[i] has normal[i] and uv0[i]).
+             Submeshes are slices of one shared vertex/normal/UV array, each with their
+             own triangle index list — this matches the conventions of Unity's Mesh,
+             Three.js BufferGeometry, glTF primitives, and most other modern engines.
+            
+             Triangle winding: CCW when viewed from the side the normal points to.
+             </summary>
+        </member>
+        <member name="P:OpenApparatus.Geometry.MeshData.SubmeshIndices">
+            <summary>One triangle index list per submesh. Indices reference the global vertex array.</summary>
+        </member>
+        <member name="M:OpenApparatus.Geometry.MeshData.Combine(System.Collections.Generic.IReadOnlyList{OpenApparatus.Geometry.MeshData})">
+            <summary>
+            Concatenates several mesh-datas into one. Vertex/normal/UV arrays are appended;
+            submesh triangles are merged by index, with indices offset by the running vertex count
+            so each input's triangles continue to reference its own vertices.
+            Submesh count of the result = max submesh count across inputs.
+            </summary>
+        </member>
+        <member name="T:OpenApparatus.Geometry.MeshDataBuilder">
+             <summary>
+             Incremental builder for <see cref="T:OpenApparatus.Geometry.MeshData"/>. Owns growing vertex/normal/UV
+             lists plus per-submesh triangle index lists.
+            
+             Vertices are appended per face (no sharing across faces — keeps normals sharp
+             at edges). Submesh indices are looked up by integer key; missing keys auto-create.
+             </summary>
+        </member>
+        <member name="M:OpenApparatus.Geometry.MeshDataBuilder.AddQuad(System.Int32,System.Numerics.Vector3,System.Numerics.Vector3,System.Numerics.Vector3,System.Numerics.Vector3,System.Numerics.Vector2,System.Numerics.Vector2,System.Numerics.Vector2,System.Numerics.Vector2)">
+            <summary>
+            Adds a quad face with corners <paramref name="a"/>, <paramref name="b"/>,
+            <paramref name="c"/>, <paramref name="d"/> in CCW order viewed from the
+            side the normal points to. UVs are taken at the same indices.
+            </summary>
+        </member>
+        <member name="M:OpenApparatus.Geometry.MeshDataBuilder.AddQuadAutoUv(System.Int32,System.Numerics.Vector3,System.Numerics.Vector3,System.Numerics.Vector3,System.Numerics.Vector3)">
+            <summary>
+            Adds a quad face whose UVs are auto-generated from face-local distance:
+            uvA=(0,0), uvB=(width,0), uvC=(width,height), uvD=(0,height) where
+            width = |b-a| and height = |d-a|.
+            </summary>
+        </member>
+        <member name="M:OpenApparatus.Geometry.MeshDataBuilder.EnsureSubmeshCount(System.Int32)">
+            <summary>
+            Forces the output to have at least <paramref name="submeshCount"/> submeshes,
+            padding any unused indices with empty arrays. Useful when the builder hasn't
+            touched all conventional submeshes but downstream code expects them.
+            </summary>
+        </member>
+        <member name="T:OpenApparatus.Geometry.MultiRoomEnvironmentMeshAssembler">
+             <summary>
+             Walks a <see cref="T:OpenApparatus.Topology.MultiRoomEnvironment"/> and produces one merged <see cref="T:OpenApparatus.Geometry.MeshData"/>
+             per room. The result is a list of <see cref="T:OpenApparatus.Geometry.AssembledRoomMesh"/> in the same
+             order as <see cref="P:OpenApparatus.Topology.MultiRoomEnvironment.Rooms"/>.
+            
+             Per room, the assembler:
+               1. Builds the room's interior (floor + ceiling) via the appropriate
+                  <c>I*InteriorBuilder</c> for the room's shape.
+               2. For each adjacency the room touches, decides whether this room owns the
+                  wall (lower-id ownership for internal adjacencies; RoomA owns its outer
+                  adjacencies). Walls owned by this room are built via
+                  <see cref="T:OpenApparatus.Geometry.BoundaryWallBuilder"/> and appended to its mesh parts.
+               3. Combines all parts with <see cref="M:OpenApparatus.Geometry.MeshData.Combine(System.Collections.Generic.IReadOnlyList{OpenApparatus.Geometry.MeshData})"/>.
+            
+             In v1 only <see cref="T:OpenApparatus.Topology.RectangleShape"/> is supported. Other shapes will
+             throw — extending support means adding a builder for that shape and a
+             dispatch case below.
+            
+             Known limitation: at outer corners of a building, walls don't extend past
+             their segment ends, so a t/2 × t/2 square gap remains. To be fixed in a
+             subsequent milestone (corner posts, or wall length extension).
+             </summary>
+        </member>
+        <member name="M:OpenApparatus.Geometry.MultiRoomEnvironmentMeshAssembler.ResolveWallOwner(OpenApparatus.Topology.Adjacency)">
+            <summary>
+            The room whose mesh will contain the wall geometry for this adjacency.
+            • Outer adjacency: RoomA (the only room).
+            • Internal adjacency: lower-id room.
+            </summary>
+        </member>
+        <member name="T:OpenApparatus.Geometry.RectangleGeometryBuilder">
+             <summary>
+             Builds a <see cref="T:OpenApparatus.Geometry.MeshData"/> for a single fully-closed room whose shape is a
+             <see cref="T:OpenApparatus.Topology.RectangleShape"/>. The room becomes a thick-walled box with three
+             submeshes (floor, walls, ceiling).
+            
+             Faces emitted (18 total):
+               • 1 floor quad   (interior, normal +Y)
+               • 1 ceiling quad (interior, normal −Y)
+               • 4 outer wall quads — at the room footprint, normals point outward
+               • 4 inner wall quads — at the inset interior boundary, normals point inward
+               • 4 top frame quads — annular ring at y = wallHeight between outer and inner
+               • 4 bottom frame quads — annular ring at y = 0 between outer and inner
+            
+             Each face has its own 4 vertices (no sharing between faces) so normals stay sharp.
+             Room rotation is supported.
+             </summary>
+        </member>
+        <member name="M:OpenApparatus.Geometry.RectangleGeometryBuilder.AddVerticalWall(OpenApparatus.Geometry.MeshDataBuilder,OpenApparatus.Topology.Room,System.Single,System.Single,System.Single,System.Single,System.Single)">
+            <summary>
+            Emit a vertical wall quad spanning from (ax, az) to (bx, bz) at the floor,
+            extruded upward to <paramref name="height"/>. The face's outward normal is
+            determined by the start→end direction (right-hand rule around +Y).
+            </summary>
+        </member>
+        <member name="M:OpenApparatus.Geometry.RectangleGeometryBuilder.AddHorizontalQuad(OpenApparatus.Geometry.MeshDataBuilder,OpenApparatus.Topology.Room,System.Single,System.Single,System.Single,System.Single,System.Single,System.Boolean)">
+            <summary>
+            Emit a horizontal quad in the XZ plane, axis-aligned, spanning [xMin..xMax] × [zMin..zMax]
+            at the given y. <paramref name="normalUp"/>=true → normal +Y; false → normal −Y.
+            </summary>
+        </member>
+        <member name="M:OpenApparatus.Geometry.RectangleGeometryBuilder.World(OpenApparatus.Topology.Room,System.Single,System.Single,System.Single)">
+            <summary>
+            Transform a room-local point (cellX in 2D X, cellZ in 2D Z, plus a world Y)
+            into a world-space Vector3, applying the room's position and rotation.
+            </summary>
+        </member>
+        <member name="T:OpenApparatus.Geometry.RectangleInteriorBuilder">
+             <summary>
+             Builds the floor + ceiling of a rectangle room for the production pipeline.
+             Uses the "split convention": walls live AT the room outline (centered with
+             thickness t/2 on each side), so the interior occupies
+             (t/2, t/2)..(W − t/2, D − t/2). The walls themselves are added separately
+             by <see cref="T:OpenApparatus.Geometry.BoundaryWallBuilder"/>; the assembler combines the two.
+            
+             This is the production-side counterpart to the all-walls-included
+             <see cref="T:OpenApparatus.Geometry.RectangleGeometryBuilder"/> (kept for isolated-room preview).
+             </summary>
+        </member>
+        <member name="M:OpenApparatus.Geometry.RectangleInteriorBuilder.Build(OpenApparatus.Topology.Room,System.Single,System.Single)">
+            <summary>
+            Returns a MeshData with floor (submesh 0) + ceiling (submesh 2) populated;
+            walls (submesh 1) is present but empty so the result composes cleanly with
+            per-adjacency wall meshes.
+            </summary>
+        </member>
+        <member name="T:OpenApparatus.Geometry.SubmeshIndex">
+            <summary>
+            Conventional submesh indices used by every room-geometry builder. Engine
+            adapters look these up to assign per-element materials (one floor material,
+            one wall material, one ceiling material per room mesh).
+            </summary>
+        </member>
+        <member name="T:OpenApparatus.SeededRandom">
+            <summary>
+            Deterministic random number source. The single RNG used throughout floor-plan
+            generation: every generator and passage assigner takes a <see cref="T:OpenApparatus.SeededRandom"/>,
+            never a raw <see cref="T:System.Random"/>. This keeps "same seed → same plan"
+            inviolable, which is the single most important reproducibility guarantee the
+            library makes.
+            </summary>
+        </member>
+        <member name="P:OpenApparatus.SeededRandom.Seed">
+            <summary>The seed that was used to construct this instance.</summary>
+        </member>
+        <member name="M:OpenApparatus.SeededRandom.NextFloat">
+            <summary>Uniform float in [0, 1).</summary>
+        </member>
+        <member name="M:OpenApparatus.SeededRandom.NextInt(System.Int32)">
+            <summary>Uniform integer in [0, maxExclusive).</summary>
+        </member>
+        <member name="M:OpenApparatus.SeededRandom.NextInt(System.Int32,System.Int32)">
+            <summary>Uniform integer in [minInclusive, maxExclusive).</summary>
+        </member>
+        <member name="M:OpenApparatus.SeededRandom.NextBool">
+            <summary>Fair coin flip.</summary>
+        </member>
+        <member name="M:OpenApparatus.SeededRandom.Pick``1(System.Collections.Generic.IReadOnlyList{``0})">
+            <summary>Returns a uniformly-chosen element from <paramref name="items"/>.</summary>
+        </member>
+        <member name="M:OpenApparatus.SeededRandom.Shuffle``1(System.Collections.Generic.IList{``0})">
+            <summary>In-place Fisher–Yates shuffle.</summary>
+        </member>
+        <member name="T:OpenApparatus.Topology.Adjacency">
+            <summary>
+            A boundary segment between two rooms, or between one room and the outside.
+            Adjacencies are produced by an <see cref="T:OpenApparatus.Topology.IMultiRoomEnvironmentGenerator"/> (always with
+            <see cref="T:OpenApparatus.Topology.Passage.Closed"/> initially) and then assigned passages by an
+            <see cref="T:OpenApparatus.Topology.IPassageAssigner"/> to form the floor plan's connectivity.
+            </summary>
+        </member>
+        <member name="P:OpenApparatus.Topology.Adjacency.RoomB">
+            <summary>Null when this is an outer-boundary adjacency (room ↔ outside).</summary>
+        </member>
+        <member name="P:OpenApparatus.Topology.Adjacency.SharedSegment">
+            <summary>
+            The boundary segment in world XZ. Direction follows the CCW outline convention:
+            walking Start → End, RoomA is on the left and RoomB (or outside) is on the right.
+            </summary>
+        </member>
+        <member name="P:OpenApparatus.Topology.Adjacency.Passage">
+            <summary>Mutable — set by the passage assigner. Defaults to <see cref="F:OpenApparatus.Topology.Passage.Closed.Instance"/>.</summary>
+        </member>
+        <member name="P:OpenApparatus.Topology.Adjacency.IsInternal">
+            <summary>True if this connects two rooms (false for outer-boundary adjacencies).</summary>
+        </member>
+        <member name="P:OpenApparatus.Topology.Adjacency.IsOuter">
+            <summary>True if this connects one room to the outside (false for inter-room adjacencies).</summary>
+        </member>
+        <member name="M:OpenApparatus.Topology.Adjacency.Other(OpenApparatus.Topology.Room)">
+            <summary>Returns the other room across this adjacency, or null if outer.</summary>
+        </member>
+        <member name="T:OpenApparatus.Topology.Assigners.SpanningTreePassageAssigner">
+             <summary>
+             Walks the floor plan's room adjacency graph and selects a random spanning tree —
+             the cheapest data structure that guarantees exactly one path between any two rooms.
+             Selected internal adjacencies become <see cref="T:OpenApparatus.Topology.Passage.Doorway"/>s; the rest stay
+             <see cref="T:OpenApparatus.Topology.Passage.Closed"/>. Optionally, one outer adjacency becomes a doorway too,
+             representing the entrance from outside the floor.
+            
+             Algorithm: Kruskal-with-shuffled-edges. Conceptually equivalent to assigning each
+             edge a random weight and picking the minimum spanning tree, but cheaper.
+             </summary>
+        </member>
+        <member name="P:OpenApparatus.Topology.Assigners.SpanningTreePassageAssigner.IncludeOuterEntrance">
+            <summary>If true, designates one outer adjacency as the floor's entrance doorway.</summary>
+        </member>
+        <member name="P:OpenApparatus.Topology.Assigners.SpanningTreePassageAssigner.PreferEntranceRoomType">
+            <summary>
+            If non-null and <see cref="P:OpenApparatus.Topology.Assigners.SpanningTreePassageAssigner.IncludeOuterEntrance"/> is true, the outer entrance
+            is preferentially placed on a leaf room whose <see cref="P:OpenApparatus.Topology.Room.RoomType"/> matches.
+            Falls back to any leaf if no matching room is on the boundary.
+            </summary>
+        </member>
+        <member name="T:OpenApparatus.Topology.Assigners.SpanningTreePassageAssigner.UnionFind">
+            <summary>Disjoint-set with union-by-rank + path compression. Internal helper.</summary>
+        </member>
+        <member name="T:OpenApparatus.Topology.Generators.GridDominoGenerator">
+             <summary>
+             Tiles an axis-aligned <c>floorWidth × floorLength</c> grid of square tiles
+             (each <see cref="P:OpenApparatus.Topology.Generators.GridDominoGenerator.TileSize"/> on a side) with:
+               1. <see cref="P:OpenApparatus.Topology.Generators.GridDominoGenerator.RectangleRoomCount"/> randomly-placed 1×2 dominoes (rectangle rooms),
+               2. then 1×1 squares filling every remaining tile.
+            
+             The output is a <see cref="T:OpenApparatus.Topology.MultiRoomEnvironment"/> whose adjacencies are all initially
+             <see cref="T:OpenApparatus.Topology.Passage.Closed"/>; pass it to an <see cref="T:OpenApparatus.Topology.IPassageAssigner"/> to
+             open doors.
+             </summary>
+        </member>
+        <member name="P:OpenApparatus.Topology.Generators.GridDominoGenerator.FloorWidthCells">
+            <summary>Number of tiles along the +X axis.</summary>
+        </member>
+        <member name="P:OpenApparatus.Topology.Generators.GridDominoGenerator.FloorLengthCells">
+            <summary>Number of tiles along the +Z axis.</summary>
+        </member>
+        <member name="P:OpenApparatus.Topology.Generators.GridDominoGenerator.RectangleRoomCount">
+            <summary>How many 1×2 rectangle rooms to place before filling with squares.</summary>
+        </member>
+        <member name="P:OpenApparatus.Topology.Generators.GridDominoGenerator.TileSize">
+            <summary>Side length of one grid tile (and therefore one square room) in world units.</summary>
+        </member>
+        <member name="P:OpenApparatus.Topology.Generators.GridDominoGenerator.MaxPlacementRetries">
+            <summary>Cap on the random-retry loop when a domino placement collides.</summary>
+        </member>
+        <member name="P:OpenApparatus.Topology.Generators.GridDominoGenerator.Orientation">
+            <summary>
+            Controls whether each rectangle is laid length-wise (1×2 along +Z),
+            width-wise (2×1 along +X), or randomly per-rectangle (the default).
+            </summary>
+        </member>
+        <member name="M:OpenApparatus.Topology.Generators.GridDominoGenerator.BuildAdjacencies(System.Int32[0:,0:],OpenApparatus.Topology.Room[])">
+            <summary>
+            Walks the grid and emits one adjacency per directed boundary segment between
+            distinct rooms (or between a room and the outside). Multiple grid-room-pairs
+            between the same two rooms are collapsed into one adjacency with the merged
+            world segment.
+            </summary>
+        </member>
+        <member name="M:OpenApparatus.Topology.Generators.GridDominoGenerator.GridEdgeSegment(System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Returns the world-space edge segment of grid room (x, z) on the side
+            indicated by (dx, dz). The direction is CCW around (x, z).
+            </summary>
+        </member>
+        <member name="M:OpenApparatus.Topology.Generators.GridDominoGenerator.MergeColinearSegments(System.Collections.Generic.List{OpenApparatus.EdgeSegment})">
+            <summary>
+            Merges segments that share an endpoint AND a direction into single longer ones.
+            All input segments in any one call are guaranteed colinear by the binning logic above.
+            </summary>
+        </member>
+        <member name="T:OpenApparatus.Topology.Generators.RectangleOrientation">
+            <summary>
+            Controls how rectangle (1×2) rooms are oriented when placed by
+            <see cref="T:OpenApparatus.Topology.Generators.GridDominoGenerator"/>.
+            </summary>
+        </member>
+        <member name="F:OpenApparatus.Topology.Generators.RectangleOrientation.Random">
+            <summary>Each rectangle's orientation is picked at random per placement.</summary>
+        </member>
+        <member name="F:OpenApparatus.Topology.Generators.RectangleOrientation.LengthWise">
+            <summary>
+            All rectangles span along the floor's length axis (+Z) — i.e. each rectangle
+            occupies a 1-tile-wide × 2-tile-long footprint.
+            </summary>
+        </member>
+        <member name="F:OpenApparatus.Topology.Generators.RectangleOrientation.WidthWise">
+            <summary>
+            All rectangles span along the floor's width axis (+X) — i.e. each rectangle
+            occupies a 2-tile-wide × 1-tile-long footprint.
+            </summary>
+        </member>
+        <member name="T:OpenApparatus.Topology.IMultiRoomEnvironmentGenerator">
+            <summary>
+            Strategy that produces a fresh <see cref="T:OpenApparatus.Topology.MultiRoomEnvironment"/> from a seeded RNG.
+            Implementations must be deterministic — same instance + same seed must
+            always yield the same plan.
+            </summary>
+        </member>
+        <member name="T:OpenApparatus.Topology.IPassageAssigner">
+            <summary>
+            Strategy that mutates the passages on a <see cref="T:OpenApparatus.Topology.MultiRoomEnvironment"/>'s adjacencies
+            (e.g. picking which closed walls become doorways) to define the floor's
+            connectivity pattern.
+            </summary>
+        </member>
+        <member name="T:OpenApparatus.Topology.IRoomShape">
+            <summary>
+            The 2D footprint of a room in room-local coordinates (XZ plane).
+            Implementations expose the boundary as an ordered list of <see cref="T:OpenApparatus.EdgeSegment"/>s,
+            CCW from above, starting at a deterministic vertex (so two equal shapes always have
+            the same edge ordering — this is required for golden-master tests).
+            </summary>
+        </member>
+        <member name="M:OpenApparatus.Topology.IRoomShape.GetOutline">
+            <summary>
+            The shape's outline as a closed polyline in room-local coordinates,
+            CCW from above (the room interior is on the left of each edge).
+            Ordering is shape-specific but deterministic.
+            </summary>
+        </member>
+        <member name="M:OpenApparatus.Topology.IRoomShape.GetLocalBounds">
+            <summary>Axis-aligned bounding box of the outline in room-local coordinates.</summary>
+        </member>
+        <member name="T:OpenApparatus.Topology.MultiRoomEnvironment">
+            <summary>
+            The output of <see cref="M:OpenApparatus.Topology.IMultiRoomEnvironmentGenerator.Generate(OpenApparatus.SeededRandom)"/>: a set of rooms and the
+            adjacencies between them (and to the outside). This is the engine-agnostic
+            description of a floor plan; the geometry layer turns it into meshes.
+            </summary>
+        </member>
+        <member name="M:OpenApparatus.Topology.MultiRoomEnvironment.GetWorldBounds">
+            <summary>Bounds in world coordinates encompassing every room.</summary>
+        </member>
+        <member name="M:OpenApparatus.Topology.MultiRoomEnvironment.GetAdjacenciesOf(OpenApparatus.Topology.Room)">
+            <summary>All adjacencies that touch <paramref name="room"/> (internal or outer).</summary>
+        </member>
+        <member name="M:OpenApparatus.Topology.MultiRoomEnvironment.GetInternalAdjacencies">
+            <summary>All adjacencies between two rooms (excludes outer boundaries).</summary>
+        </member>
+        <member name="M:OpenApparatus.Topology.MultiRoomEnvironment.GetOuterAdjacencies">
+            <summary>All adjacencies between a room and the outside.</summary>
+        </member>
+        <member name="T:OpenApparatus.Topology.MultiRoomEnvironmentBuilder">
+             <summary>
+             Constructs a <see cref="T:OpenApparatus.Topology.MultiRoomEnvironment"/> from an authored tile grid.
+             This is the editor-driven counterpart to <see cref="T:OpenApparatus.Topology.IMultiRoomEnvironmentGenerator"/>:
+             the user lays out which tiles belong to which room, the builder turns that
+             grid into the materialized environment with adjacencies derived from it.
+            
+             Grid convention:
+               • <c>grid[x, z] == -1</c> → empty tile (no room there; counts as "outside")
+               • <c>grid[x, z] &gt;= 0</c>  → that tile belongs to room with that id
+            
+             In v1, every room must occupy a contiguous, axis-aligned rectangular set of
+             tiles. Non-rectangular tile sets throw — polygon-shaped rooms come later.
+            
+             All adjacencies in the returned environment are <see cref="T:OpenApparatus.Topology.Passage.Closed"/>;
+             pass it to an <see cref="T:OpenApparatus.Topology.IPassageAssigner"/> or mutate the passages in the
+             editor to define connectivity.
+             </summary>
+        </member>
+        <member name="M:OpenApparatus.Topology.MultiRoomEnvironmentBuilder.BuildAdjacencies(System.Int32[0:,0:],System.Int32,System.Int32,System.Collections.Generic.Dictionary{System.Int32,OpenApparatus.Topology.Room},System.Single)">
+            <summary>
+            Walks the grid and produces one adjacency per inter-room shared boundary segment
+            (for distinct rooms) or per outer-boundary segment (for empty / out-of-bounds neighbors).
+            Each internal boundary is visited exactly once. Outer boundaries are visited per side.
+            </summary>
+        </member>
+        <member name="M:OpenApparatus.Topology.MultiRoomEnvironmentBuilder.GridEdgeSegment(System.Int32,System.Int32,System.Int32,System.Int32,System.Single)">
+            <summary>
+            Returns the world-space edge segment of grid tile (x, z) on the side
+            indicated by (dx, dz). Direction is CCW around the tile.
+            </summary>
+        </member>
+        <member name="M:OpenApparatus.Topology.MultiRoomEnvironmentBuilder.MergeColinearSegments(System.Collections.Generic.List{OpenApparatus.EdgeSegment})">
+            <summary>Merge segments that share an endpoint AND a direction into one longer segment.</summary>
+        </member>
+        <member name="T:OpenApparatus.Topology.Passage">
+            <summary>
+            What lies along the boundary an <see cref="T:OpenApparatus.Topology.Adjacency"/> represents. Sealed
+            hierarchy — extend by adding a new nested type, never by inheriting outside this file.
+            </summary>
+        </member>
+        <member name="T:OpenApparatus.Topology.Passage.Closed">
+            <summary>A solid wall — no opening between the two rooms (or to the outside).</summary>
+        </member>
+        <member name="T:OpenApparatus.Topology.Passage.Open">
+            <summary>No wall at all. The two rooms share floor space (e.g. T-maze internal arms).</summary>
+        </member>
+        <member name="T:OpenApparatus.Topology.Passage.Doorway">
+            <summary>
+            A solid wall with one or more rectangular openings cut into it. Each opening
+            sits on the floor (y=0) and rises to the opening's height.
+            </summary>
+        </member>
+        <member name="M:OpenApparatus.Topology.Passage.Doorway.#ctor(System.Single,System.Single,System.Single)">
+            <summary>Convenience constructor for the common single-opening case.</summary>
+        </member>
+        <member name="T:OpenApparatus.Topology.Opening">
+             <summary>
+             One rectangular opening in a doorway wall. <see cref="P:OpenApparatus.Topology.Opening.OffsetAlongEdge"/> is
+             the distance from the shared segment's Start to the opening's left edge.
+             <see cref="P:OpenApparatus.Topology.Opening.SillHeight"/> is the bottom of the opening; 0 = a door (sits on
+             the floor), &gt;0 = a window (a wall panel below the opening). <see cref="P:OpenApparatus.Topology.Opening.Height"/>
+             is the top of the opening (head height), measured from the floor.
+            
+             <para><see cref="P:OpenApparatus.Topology.Opening.HingeAtEnd"/> and <see cref="P:OpenApparatus.Topology.Opening.SwingNegative"/> are
+             presentation hints for door panels: they pick which end of the opening
+             the hinge sits on and which side of the wall the door swings into. The
+             geometric opening (the rectangular hole through the wall) is unaffected
+             — these flags are read by 2D editors and render-time door props in
+             downstream tools.</para>
+             </summary>
+        </member>
+        <member name="P:OpenApparatus.Topology.Opening.IsWindow">
+            <summary>True when <see cref="P:OpenApparatus.Topology.Opening.SillHeight"/> &gt; 0 — the opening floats above the floor.</summary>
+        </member>
+        <member name="M:OpenApparatus.Topology.Opening.With(System.Nullable{System.Single},System.Nullable{System.Single},System.Nullable{System.Single},System.Nullable{System.Single},System.Nullable{System.Boolean},System.Nullable{System.Boolean})">
+            <summary>Returns a copy with the named field replaced. Lets editors mutate
+            one piece of state without rebuilding the whole struct in client code.</summary>
+        </member>
+        <member name="T:OpenApparatus.Topology.RectangleShape">
+             <summary>
+             A width × depth axis-aligned rectangle, with its local origin at the
+             south-west (min) corner and edges in the order [South, East, North, West].
+            
+             Coordinate convention: +X = east, +Z = north (in 2D, +Y component of the
+             stored Vector2 represents the +Z world axis).
+             </summary>
+        </member>
+        <member name="M:OpenApparatus.Topology.RectangleShape.GetOutline">
+            <summary>
+            Outline ordered CCW from above:
+            [0] South: (0,0) → (W,0)
+            [1] East:  (W,0) → (W,D)
+            [2] North: (W,D) → (0,D)
+            [3] West:  (0,D) → (0,0)
+            </summary>
+        </member>
+        <member name="T:OpenApparatus.Topology.Room">
+             <summary>
+             A single room / region of a floor plan. Owns a <see cref="T:OpenApparatus.Topology.IRoomShape"/> outline,
+             a world-space placement, and a classification used by generators.
+            
+             The shape lives in room-local coordinates with the local origin defined by the
+             shape implementation. World-space outline is computed by translating + rotating
+             the local outline by <see cref="P:OpenApparatus.Topology.Room.Position"/> and <see cref="P:OpenApparatus.Topology.Room.Rotation"/>.
+             </summary>
+        </member>
+        <member name="P:OpenApparatus.Topology.Room.Position">
+            <summary>World XZ position of the room's local-origin point.</summary>
+        </member>
+        <member name="P:OpenApparatus.Topology.Room.Rotation">
+            <summary>Rotation about the +Y axis, in degrees. CCW positive (looking down).</summary>
+        </member>
+        <member name="P:OpenApparatus.Topology.Room.RoomType">
+            <summary>Generator-assigned room type. Drives downstream behavior (e.g. entrance preference).</summary>
+        </member>
+        <member name="M:OpenApparatus.Topology.Room.GetWorldOutline">
+            <summary>The room's outline transformed into world coordinates.</summary>
+        </member>
+        <member name="M:OpenApparatus.Topology.Room.LocalToWorld(System.Numerics.Vector2,System.Single)">
+            <summary>
+            Transform a room-local 2D point (in XZ) into a world-space 3D point at the
+            given <paramref name="y"/>, applying <see cref="P:OpenApparatus.Topology.Room.Position"/> and <see cref="P:OpenApparatus.Topology.Room.Rotation"/>.
+            </summary>
+        </member>
+        <member name="M:OpenApparatus.Topology.Room.GetWorldBounds">
+            <summary>The room's bounds in world coordinates (axis-aligned even if shape is rotated).</summary>
+        </member>
+        <member name="T:OpenApparatus.Topology.RoomType">
+            <summary>
+            Classification of a room placed by a tiling generator. Currently used by
+            <c>GridDominoGenerator</c> to distinguish single-tile rooms from 1×2 dominoes.
+            </summary>
+        </member>
+        <member name="T:System.Runtime.CompilerServices.IsExternalInit">
+            <summary>
+            Reserved by the compiler for record types and `init` setters. The marker is
+            shipped in .NET 5+; we polyfill it here so we can use those features while
+            still multi-targeting netstandard2.1 for Unity compatibility.
+            </summary>
+        </member>
+    </members>
+</doc>
