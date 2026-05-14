@@ -157,7 +157,7 @@ namespace OpenApparatus.Unity
 #endif
         }
 
-        void SpawnCell(Transform parent, AssembledCellMesh assembled)
+        void SpawnCell(Transform parent, AssembledRoomMesh assembled)
         {
             var go = new GameObject($"Cell_{assembled.Room.Id}_{assembled.Room.RoomType}",
                 typeof(MeshFilter), typeof(MeshRenderer));
