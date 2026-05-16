@@ -41,34 +41,37 @@ namespace OpenApparatus.Unity.Editor.Internal
             roomComponent.GridPositionStudio = roomData.GridPositionStudio;
             roomComponent.TileIndices = roomData.TileIndices;
 
-            var mesh = asset.GetRoomMesh(roomData.Id);
-            if (mesh != null)
-            {
-                var mf = roomGo.AddComponent<MeshFilter>();
-                mf.sharedMesh = mesh;
-                var mr = roomGo.AddComponent<MeshRenderer>();
-                mr.sharedMaterials = new[]
-                {
-                    MaterialResolver.Resolve($"OpenApparatus_Floor_{roomData.Id}"),
-                    MaterialResolver.Resolve($"OpenApparatus_Walls_{roomData.Id}"),
-                    MaterialResolver.Resolve($"OpenApparatus_Ceiling_{roomData.Id}"),
-                };
-                mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
-            }
+            SpawnFloor(roomGo.transform, roomData, p);
+            SpawnCeiling(roomGo.transform, roomData, p);
 
             if (roomData.Walls != null)
                 foreach (var wd in roomData.Walls)
-                    SpawnWall(roomGo.transform, wd);
+                    SpawnWall(roomGo.transform, wd, roomData.Id, p);
 
             if (roomData.Objects != null)
                 foreach (var od in roomData.Objects)
                     SpawnObject(roomGo.transform, od, roomData.Id, asset);
         }
 
-        static void SpawnWall(Transform parent, WallData wd)
+        static void SpawnFloor(Transform parent, RoomData rd, EnvironmentParameters p)
         {
-            var go = new GameObject($"Wall_{wd.Number}");
-            go.transform.SetParent(parent, worldPositionStays: false);
+            var go = CreateMeshChild(parent, "Floor",
+                JsonGeometryBuilder.BuildFloorMesh(rd, p, $"OpenApparatus_Floor_{rd.Id}"),
+                MaterialResolver.Resolve($"OpenApparatus_Floor_{rd.Id}"));
+        }
+
+        static void SpawnCeiling(Transform parent, RoomData rd, EnvironmentParameters p)
+        {
+            var go = CreateMeshChild(parent, "Ceiling",
+                JsonGeometryBuilder.BuildCeilingMesh(rd, p, $"OpenApparatus_Ceiling_{rd.Id}"),
+                MaterialResolver.Resolve($"OpenApparatus_Ceiling_{rd.Id}"));
+        }
+
+        static void SpawnWall(Transform parent, WallData wd, int roomId, EnvironmentParameters p)
+        {
+            var go = CreateMeshChild(parent, $"Wall_{wd.Number}",
+                JsonGeometryBuilder.BuildWallMesh(wd, p, $"OpenApparatus_Walls_{roomId}_{wd.Number}"),
+                MaterialResolver.Resolve($"OpenApparatus_Walls_{roomId}_{wd.Number}"));
 
             var w = go.AddComponent<Wall>();
             w.WallNumber = wd.Number;
@@ -77,6 +80,18 @@ namespace OpenApparatus.Unity.Editor.Internal
             w.NeighbourRoomId = wd.NeighbourRoomId;
             w.PassageKind = wd.PassageKind;
             w.Openings = wd.Openings;
+        }
+
+        static GameObject CreateMeshChild(Transform parent, string name, Mesh mesh, Material material)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, worldPositionStays: false);
+            var mf = go.AddComponent<MeshFilter>();
+            mf.sharedMesh = mesh;
+            var mr = go.AddComponent<MeshRenderer>();
+            mr.sharedMaterial = material;
+            mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
+            return go;
         }
 
         static void SpawnObject(Transform parent, ObjectInstanceData od, int owningRoomId,
@@ -91,6 +106,16 @@ namespace OpenApparatus.Unity.Editor.Internal
             go.transform.localRotation = Quaternion.Euler(0f, od.LocalRotationY * Mathf.Rad2Deg, 0f);
             if (slot != null && slot.Size > 0f)
                 go.transform.localScale = Vector3.one * slot.Size;
+
+            // CreatePrimitive auto-attaches a Collider matching the shape.
+            // The Objects flag in ColliderMode controls whether placeholders
+            // keep that collider. Substituted prefabs are unaffected — their
+            // collider is whatever the prefab author shipped.
+            if ((asset.ColliderMode & ColliderMode.Objects) == 0)
+            {
+                foreach (var c in go.GetComponents<Collider>())
+                    Object.DestroyImmediate(c);
+            }
 
             var instance = go.AddComponent<RoomObjectInstance>();
             instance.Slot = od.Slot;

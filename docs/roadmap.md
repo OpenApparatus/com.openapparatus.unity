@@ -90,7 +90,7 @@ the resolver work end-to-end.
 
 Independent files:
 
-- A → `Editor/Importers/Json*.cs`, `Tests/Fixtures/single_room.json`
+- A → `Editor/Importers/Json*.cs`, `Tests/Fixtures/single_room.oae`
 - B → `Editor/Importers/Gltf*.cs`, `Tests/Fixtures/single_room.glb`
 - D → `Samples~/ImportedEnvironment/`, `package.json` (`samples` block)
 - E → `Tests/Editor/`, `.github/workflows/test.yml`
@@ -102,7 +102,7 @@ Independent files:
 
 Shared touch-point: `Tests/Fixtures/`. If A and B both add fixtures,
 they may compete on naming. Task briefs prescribe distinct fixture
-names (`single_room.json` for A, `single_room.glb` for B) so this
+names (`single_room.oae` for A, `single_room.glb` for B) so this
 doesn't blow up.
 
 Tasks I and J both call into the spawn sequence that task A introduces.
@@ -144,7 +144,7 @@ are in [decisions.md § ADR-0007](decisions.md#adr-0007-studio-local-http-api-ra
 
 **Wave 2 done when:**
 
-- Dragging a Studio-exported `single_room.json` into Assets/ produces
+- Dragging a Studio-exported `single_room.oae` into Assets/ produces
   a `MultiRoomEnvironmentAsset` with one Room, four Walls, correct
   passage data.
 - Clicking "Spawn into scene" produces the GameObject tree described

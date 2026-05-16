@@ -50,6 +50,13 @@ namespace OpenApparatus.Unity.Editor.Internal
             var basePos = placeholder.transform.localPosition;
             var baseRot = placeholder.transform.localRotation;
 
+            // Capture the placeholder's slot metadata so we can carry it onto
+            // the substituted instance. Downstream tools (ColliderBuilder,
+            // researcher code) identify research objects via RoomObjectInstance.
+            int slot         = placeholder.Slot;
+            int owningRoomId = placeholder.OwningRoomId;
+            float rotationY  = placeholder.LocalRotationY;
+
             GameObject instance = null;
             if (PrefabUtility.IsPartOfPrefabAsset(entry.Prefab))
                 instance = (GameObject)PrefabUtility.InstantiatePrefab(entry.Prefab);
@@ -70,6 +77,14 @@ namespace OpenApparatus.Unity.Editor.Internal
                 prefabScale.x * scale.x,
                 prefabScale.y * scale.y,
                 prefabScale.z * scale.z);
+
+            // Marker survives the swap. The scene instance is mutable; the
+            // source prefab asset is untouched.
+            var marker = instance.GetComponent<RoomObjectInstance>()
+                         ?? instance.AddComponent<RoomObjectInstance>();
+            marker.Slot          = slot;
+            marker.OwningRoomId  = owningRoomId;
+            marker.LocalRotationY = rotationY;
 
             Object.DestroyImmediate(placeholder.gameObject);
         }

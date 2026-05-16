@@ -125,7 +125,7 @@ Tests/
     └── ColliderBuilderTests.cs
 ```
 
-Using the `single_room.json` fixture from task A (or a minimal
+Using the `single_room.oae` fixture from task A (or a minimal
 programmatically-constructed asset):
 
 - **None:** spawn with `ColliderMode.None`; assert zero `BoxCollider`
@@ -143,7 +143,7 @@ programmatically-constructed asset):
 ## Acceptance criteria
 
 - Spawning with `ColliderMode.None` produces no extra components.
-- Spawning with `ColliderMode.All` on `single_room.json` produces a
+- Spawning with `ColliderMode.All` on `single_room.oae` produces a
   `BoxCollider` on every `Wall` child and floor-tile colliders under
   each `Room` child.
 - Changing `ColliderMode` in the inspector and re-spawning produces

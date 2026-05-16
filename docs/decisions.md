@@ -43,7 +43,9 @@ must remember to republish.
 
 ## ADR-0002: Importer patterns — ScriptedImporter for `.json`/`.oapp`, AssetPostprocessor for glTF
 
-**Status:** Accepted, 2026-05-14.
+**Status:** Superseded by [ADR-0008](#adr-0008-oae-extension-for-environment-files) on 2026-05-16. The `ScriptedImporter`-for-`.json` part was incorrect — Unity rejects scripted-importer registrations on extensions it handles natively. Replaced with `.oae`. The glTF postprocessor decision stands.
+
+**Status (historical):** Accepted, 2026-05-14.
 
 **Context.** Three import flows, three Unity APIs available:
 
@@ -285,3 +287,59 @@ endpoint contract, only the transport address differs.
   address differs. Adding it would slot in as a `RemoteGltfConverter`
   alongside today's `StudioGltfConverter` without breaking either
   consumer.
+
+
+## ADR-0008: `.oae` extension for environment files
+
+**Status:** Accepted, 2026-05-16. Supersedes [ADR-0002](#adr-0002-importer-patterns---scriptedimporter-for-jsonoapp-assetpostprocessor-for-gltf) on the `.json` choice.
+
+**Context.** ADR-0002 chose `ScriptedImporter` with the `.json`
+extension to import Studio's environment exports. Discovered at
+implementation time: Unity rejects `ScriptedImporter` registrations
+on extensions handled by built-in importers (`.json` is owned by the
+default TextAsset importer). The log message is unambiguous:
+
+> The scripted importer 'JsonEnvironmentImporter' attempted to register
+> file type '.json', which is handled by a native Unity importer.
+> Registration rejected.
+
+Workarounds considered:
+
+1. Use `AssetPostprocessor.OnPostprocessAllAssets` to watch
+   `.json` imports, detect ours via discriminator, and side-create a
+   `MultiRoomEnvironmentAsset` next to the source file.
+2. Use a custom extension that Unity doesn't already own.
+
+**Decision.** Option 2. Studio exports go to `.oae`
+(OpenApparatus Environment). The file's contents remain valid JSON —
+researchers can open in any text editor — but the extension is ours,
+and the `ScriptedImporter`-based design from ADR-0002 works as
+intended.
+
+**Why not option 1.** Two assets per import (`foo.json` TextAsset +
+`foo.asset` MultiRoomEnvironmentAsset) is clunky to manage, doubles
+the AssetDatabase entries, and breaks the clean main-asset
+relationship the spawn flow depends on. Half a step from doing it
+right.
+
+**Alternatives rejected.**
+
+- *`.openapparatus.json` / `.oa.json`* — Unity matches on the last
+  extension only, so these still register as `.json`. No-op.
+- *Keep `.json` and skip the importer; rely on a manual menu item.* —
+  Loses drag-and-drop ergonomics. Substandard researcher workflow.
+
+**Consequences.**
+
+- Cross-repo coordination required:
+  - `openapparatus-core`'s `JsonExporter` should write `.oae` files
+    (or accept an extension config). Tracked as a follow-up PR.
+  - `openapparatus-studio`'s file-save dialogs should default to
+    `.oae`. Tracked as a follow-up PR.
+- Until those PRs land, researchers manually rename Studio's `.json`
+  exports to `.oae` after saving. Documented in the sample README.
+- The schema discriminator (ADR-0006) still applies for the contents,
+  in case someone hand-renames an unrelated `.json` to `.oae`.
+- The companion glTF flow (ADR-0002, AssetPostprocessor) is
+  unaffected — Unity's glTF importer is fine with the postprocessor
+  pattern; only the JSON path needed the rename.

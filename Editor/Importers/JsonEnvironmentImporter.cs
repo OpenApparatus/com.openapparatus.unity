@@ -11,9 +11,14 @@ using OpenApparatus.Unity.Internal;
 
 namespace OpenApparatus.Unity.Editor.Importers
 {
-    [ScriptedImporter(version: 1, ext: "json")]
+    [ScriptedImporter(version: 1, ext: "oae")]
     public sealed class JsonEnvironmentImporter : ScriptedImporter
     {
+        // Spawn-time settings persisted on the importer so they survive reimport.
+        // Editable via JsonEnvironmentImporterEditor (top "Import Settings" section).
+        public ColliderMode ColliderMode = ColliderMode.None;
+        public PrefabSubstitutionTable Substitution;
+
         public override void OnImportAsset(AssetImportContext ctx)
         {
             string text;
@@ -47,20 +52,11 @@ namespace OpenApparatus.Unity.Editor.Importers
             asset.ObjectSlots = MapSlots(doc.objectSlots);
             asset.Rooms = MapRooms(doc.rooms);
             asset.OutsideObjects = MapOutside(doc.outside);
+            asset.ColliderMode = ColliderMode;
+            asset.Substitution = Substitution;
 
             ctx.AddObjectToAsset("environment", asset);
             ctx.SetMainObject(asset);
-
-            if (asset.Rooms != null)
-            {
-                foreach (var room in asset.Rooms)
-                {
-                    var mesh = JsonGeometryBuilder.BuildRoomMesh(room, asset.Parameters,
-                        $"OpenApparatus_Room_{room.Id}");
-                    ctx.AddObjectToAsset($"mesh_room_{room.Id}", mesh);
-                    asset.SetRoomMesh(room.Id, mesh);
-                }
-            }
         }
 
         static EnvironmentParameters MapParameters(JsonParameters p)

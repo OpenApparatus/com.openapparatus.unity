@@ -9,7 +9,7 @@ namespace OpenApparatus.Unity.Tests.Editor
 {
     public sealed class JsonEnvironmentImporterTests
     {
-        const string FixturePath = "Packages/com.openapparatus.unity/Tests/Fixtures/single_room.json";
+        const string FixturePath = "Packages/com.openapparatus.unity/Tests/Fixtures/single_room.oae";
         const string ForeignPath = "Packages/com.openapparatus.unity/Tests/Fixtures/foreign.json";
 
         [Test]
@@ -36,7 +36,7 @@ namespace OpenApparatus.Unity.Tests.Editor
         public void Import_ProducesMultiRoomEnvironmentAsset()
         {
             var asset = AssetDatabase.LoadAssetAtPath<MultiRoomEnvironmentAsset>(FixturePath);
-            Assert.IsNotNull(asset, "single_room.json should import as MultiRoomEnvironmentAsset.");
+            Assert.IsNotNull(asset, "single_room.oae should import as MultiRoomEnvironmentAsset.");
             Assert.AreEqual(1, asset.Rooms.Length);
             Assert.AreEqual(4, asset.Rooms[0].Walls.Length);
             Assert.AreEqual(1, asset.Rooms[0].Objects.Length);
