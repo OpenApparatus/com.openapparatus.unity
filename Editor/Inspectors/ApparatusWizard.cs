@@ -43,6 +43,12 @@ namespace OpenApparatus.Unity.Editor.Inspectors
             window._config = config;
             window._so = new SerializedObject(config);
             window.minSize = new Vector2(860f, 560f);
+
+            // Generate immediately with the current settings so the preview
+            // has something to show from the first step.
+            if (config.Source != null && config.GeneratedPrefab == null)
+                ApparatusPrefabBuilder.Regenerate(config);
+
             window.Show();
         }
 

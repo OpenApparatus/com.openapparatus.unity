@@ -53,13 +53,44 @@ namespace OpenApparatus.Unity.Editor.Internal
                 : Path.GetDirectoryName(configPath);
             string prefabPath = $"{directory}/{config.name}_Apparatus.prefab";
 
+            // Delete first so each regenerate starts clean — otherwise the
+            // embedded mesh/material sub-assets accumulate across rebuilds.
+            AssetDatabase.DeleteAsset(prefabPath);
             var prefab = PrefabUtility.SaveAsPrefabAsset(instance, prefabPath);
             Object.DestroyImmediate(instance);
+            if (prefab == null) return null;
+
+            EmbedGeneratedAssets(prefab);
 
             config.GeneratedPrefab = prefab;
             EditorUtility.SetDirty(config);
             AssetDatabase.SaveAssetIfDirty(config);
             return prefab;
+        }
+
+        // The geometry meshes and tinted materials are created at build time
+        // (new Mesh / new Material) and are not assets, so a saved prefab's
+        // references to them would dangle. Embed them as sub-assets of the
+        // prefab so the floors / walls / ceilings persist.
+        static void EmbedGeneratedAssets(GameObject prefab)
+        {
+            var seen = new HashSet<Object>();
+
+            foreach (var filter in prefab.GetComponentsInChildren<MeshFilter>(true))
+            {
+                var mesh = filter.sharedMesh;
+                if (mesh != null && !AssetDatabase.Contains(mesh) && seen.Add(mesh))
+                    AssetDatabase.AddObjectToAsset(mesh, prefab);
+            }
+            foreach (var renderer in prefab.GetComponentsInChildren<Renderer>(true))
+            {
+                foreach (var material in renderer.sharedMaterials)
+                    if (material != null && !AssetDatabase.Contains(material) && seen.Add(material))
+                        AssetDatabase.AddObjectToAsset(material, prefab);
+            }
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(prefab));
         }
 
         // ---- Per-room configuration ----
