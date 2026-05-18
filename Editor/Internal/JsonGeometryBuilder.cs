@@ -59,7 +59,22 @@ namespace OpenApparatus.Unity.Editor.Internal
             return BuildMesh(meshName, verts, normals, uvs, tris);
         }
 
-        public static Mesh BuildWallMesh(WallData wall, EnvironmentParameters p, string meshName)
+        // Mirrored average of the room's tile centres, in the same room-local
+        // Unity frame as wall endpoints. Used to orient wall extrusion.
+        public static Vector3 RoomInteriorCentroid(RoomData room, EnvironmentParameters p)
+        {
+            if (room.TileIndices == null || room.TileIndices.Length == 0)
+                return Vector3.zero;
+
+            float t = p.TileSize;
+            var sum = Vector3.zero;
+            foreach (var idx in room.TileIndices)
+                sum += new Vector3(-(idx.x + 0.5f) * t, 0f, (idx.y + 0.5f) * t);
+            return sum / room.TileIndices.Length;
+        }
+
+        public static Mesh BuildWallMesh(WallData wall, RoomData room,
+                                         EnvironmentParameters p, string meshName)
         {
             var verts = new List<Vector3>();
             var normals = new List<Vector3>();
@@ -75,7 +90,17 @@ namespace OpenApparatus.Unity.Editor.Internal
             float h = p.WallHeight;
             float th = p.WallThickness;
             var tangent = delta / length;
+
+            // Wall winding (and the X-mirror) leaves the raw tangent
+            // perpendicular pointing either into or out of the room. Flip it
+            // toward the room interior centroid so the slab always extrudes
+            // inward and the visible inner face is front-facing.
             var inward = new Vector3(-tangent.z, 0, tangent.x);
+            var midpoint = (start + end) * 0.5f;
+            var toInterior = RoomInteriorCentroid(room, p) - midpoint;
+            toInterior.y = 0f;
+            if (Vector3.Dot(toInterior, inward) < 0f)
+                inward = -inward;
             var inwardOffset = inward * th;
 
             var a  = start;
