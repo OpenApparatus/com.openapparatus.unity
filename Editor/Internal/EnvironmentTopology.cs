@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using OpenApparatus;
 using OpenApparatus.Topology;
+using OpenApparatus.Unity.Internal;
 
 namespace OpenApparatus.Unity.Editor.Internal
 {
@@ -78,6 +80,96 @@ namespace OpenApparatus.Unity.Editor.Internal
         }
 
         static bool Approx(float a, float b) => Mathf.Abs(a - b) < MatchEpsilon;
+
+        /// <summary>
+        /// Converts a Core topology into the importer's <see cref="RoomData"/>
+        /// array — one room per Core room, each carrying its walls (described
+        /// from that room's perspective, like the JSON exporter). Object lists
+        /// are left empty for the caller to populate.
+        /// </summary>
+        public static RoomData[] BuildRoomData(MultiRoomEnvironment plan, int[,] grid)
+        {
+            var tilesByRoom = TilesByRoom(grid);
+            var result = new RoomData[plan.Rooms.Count];
+            for (int i = 0; i < plan.Rooms.Count; i++)
+            {
+                var room = plan.Rooms[i];
+                var walls = new List<WallData>();
+                int wallNumber = 1;
+                foreach (var adj in plan.Adjacencies)
+                {
+                    if (adj.RoomA != room && adj.RoomB != room) continue;
+
+                    bool roomIsA = adj.RoomA == room;
+                    var seg = adj.SharedSegment;
+                    var s = roomIsA ? seg.Start : seg.End;
+                    var e = roomIsA ? seg.End : seg.Start;
+                    walls.Add(new WallData
+                    {
+                        Number = wallNumber++,
+                        StartLocal = OpenApparatusSpace.ToUnity(new Vector3(s.X, 0f, s.Y)),
+                        EndLocal = OpenApparatusSpace.ToUnity(new Vector3(e.X, 0f, e.Y)),
+                        NeighbourRoomId = roomIsA ? (adj.RoomB?.Id ?? -1) : adj.RoomA.Id,
+                        PassageKind = ToUnityPassageKind(adj.Passage),
+                        Openings = ToOpeningSpecs(adj.Passage),
+                    });
+                }
+                result[i] = new RoomData
+                {
+                    Id = room.Id,
+                    RoomType = room.RoomType,
+                    GridPositionStudio = new Vector2(room.Position.X, room.Position.Y),
+                    TileIndices = tilesByRoom.TryGetValue(room.Id, out var t)
+                        ? t.ToArray()
+                        : Array.Empty<Vector2Int>(),
+                    Walls = walls.ToArray(),
+                    Objects = Array.Empty<ObjectInstanceData>(),
+                };
+            }
+            return result;
+        }
+
+        static Dictionary<int, List<Vector2Int>> TilesByRoom(int[,] grid)
+        {
+            var result = new Dictionary<int, List<Vector2Int>>();
+            int width = grid.GetLength(0);
+            int length = grid.GetLength(1);
+            for (int x = 0; x < width; x++)
+                for (int z = 0; z < length; z++)
+                {
+                    int id = grid[x, z];
+                    if (id < 0) continue;
+                    if (!result.TryGetValue(id, out var list))
+                        result[id] = list = new List<Vector2Int>();
+                    list.Add(new Vector2Int(x, z));
+                }
+            return result;
+        }
+
+        static PassageKind ToUnityPassageKind(Passage p)
+        {
+            if (p is Passage.Open) return PassageKind.Open;
+            if (p is Passage.Doorway) return PassageKind.Doorway;
+            return PassageKind.Closed;
+        }
+
+        static OpeningSpec[] ToOpeningSpecs(Passage p)
+        {
+            if (p is not Passage.Doorway d) return Array.Empty<OpeningSpec>();
+            var specs = new OpeningSpec[d.Openings.Count];
+            for (int i = 0; i < specs.Length; i++)
+            {
+                var o = d.Openings[i];
+                specs[i] = new OpeningSpec
+                {
+                    OffsetAlongEdge = o.OffsetAlongEdge,
+                    Width = o.Width,
+                    Height = o.Height,
+                    SillHeight = o.SillHeight,
+                };
+            }
+            return specs;
+        }
 
         static Passage ToCorePassage(WallData wall)
         {

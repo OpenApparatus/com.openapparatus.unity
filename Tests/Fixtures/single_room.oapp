@@ -1,0 +1,33 @@
+{
+  "version": "1.0",
+  "title": "single_room",
+  "gridWidth": 2,
+  "gridLength": 2,
+  "tileSize": 3.5,
+  "wallThickness": 0.2,
+  "wallHeight": 3.0,
+  "doorWidth": 1.2,
+  "doorHeight": 2.2,
+  "windowWidth": 1.0,
+  "windowHeight": 1.2,
+  "windowSillHeight": 0.9,
+  "gridSubdivision": 1,
+  "defaultObjectY": 0.0,
+  "roomGrid": [0, 0, 0, 0],
+  "passageOverrides": [
+    {
+      "startX": 7.0, "startZ": 7.0, "endX": 0.0, "endZ": 7.0,
+      "kind": "Doorway",
+      "openings": [
+        { "offset": 2.9, "width": 1.2, "height": 2.2, "sillHeight": 0.0,
+          "hingeAtEnd": false, "swingNegative": false }
+      ]
+    }
+  ],
+  "objectTypes": [
+    { "name": "Cup", "shape": "Cube", "color": [0.9, 0.4, 0.4], "size": 0.3 }
+  ],
+  "objects": [
+    { "slot": 1, "owningRoomId": 0, "x": 3.5, "y": 0.0, "z": 3.5, "rotation": 0.0 }
+  ]
+}
