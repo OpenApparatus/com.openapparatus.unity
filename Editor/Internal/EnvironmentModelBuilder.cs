@@ -57,7 +57,8 @@ namespace OpenApparatus.Unity.Editor.Internal
                 foreach (var adj in plan.Adjacencies)
                 {
                     if (adj.RoomA != room && adj.RoomB != room) continue;
-                    parts.Add(RoomShareOfWall(wallMeshes[adj], adj, room));
+                    parts.Add(RoomShareOfWall(wallMeshes[adj], adj, room,
+                                              opts.GenerateExteriorWalls));
                 }
                 var combined = MeshData.Combine(parts);
 
@@ -77,12 +78,16 @@ namespace OpenApparatus.Unity.Editor.Internal
         /// <summary>
         /// Filters one adjacency's wall mesh down to the triangles a given room
         /// renders: its own body face, plus frame + door-threshold geometry when
-        /// the room is the lower-id owner. Other submeshes are emptied.
+        /// the room is the lower-id owner. Other submeshes are emptied. An outer
+        /// wall's exterior face is kept only when <paramref name="generateExteriorWalls"/>
+        /// is set, since no room sits on its far side.
         /// </summary>
-        static MeshData RoomShareOfWall(MeshData wall, Adjacency adj, CoreRoom room)
+        static MeshData RoomShareOfWall(MeshData wall, Adjacency adj, CoreRoom room,
+                                        bool generateExteriorWalls)
         {
             bool roomIsA = adj.RoomA == room;
             bool isOwner = LowerIdOwner(adj) == room;
+            bool keepBodyB = !roomIsA || (adj.IsOuter && generateExteriorWalls);
             var n2 = adj.SharedSegment.Normal;
 
             var wallsIn = wall.SubmeshIndices[SubmeshIndex.Walls];
@@ -92,7 +97,7 @@ namespace OpenApparatus.Unity.Editor.Internal
                 var fn = wall.Normals[wallsIn[i]];
                 float dot = fn.X * n2.X + fn.Z * n2.Y;
                 bool keep = dot > NormalAlign ? roomIsA
-                          : dot < -NormalAlign ? !roomIsA
+                          : dot < -NormalAlign ? keepBodyB
                           : isOwner;
                 if (!keep) continue;
                 wallsOut.Add(wallsIn[i]);
