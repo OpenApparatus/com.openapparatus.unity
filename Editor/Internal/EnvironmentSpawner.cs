@@ -6,8 +6,12 @@ namespace OpenApparatus.Unity.Editor.Internal
     public static class EnvironmentSpawner
     {
         public static GameObject Spawn(ApparatusAsset asset)
+            => Spawn(asset, new EnvironmentBuildOptions());
+
+        public static GameObject Spawn(ApparatusAsset asset, EnvironmentBuildOptions options)
         {
             if (asset == null) return null;
+            options ??= new EnvironmentBuildOptions();
 
             // Geometry: rebuild the Core topology from the stored grid and
             // build it through the same Core builders Studio's glTF export
@@ -15,7 +19,7 @@ namespace OpenApparatus.Unity.Editor.Internal
             var plan = EnvironmentTopology.Rebuild(asset);
             var grid = EnvironmentTopology.ToGrid(asset);
             var root = EnvironmentModelBuilder.Build(asset.name, plan, grid,
-                                                     asset.Parameters, new EnvironmentBuildOptions());
+                                                     asset.Parameters, options);
 
             var rootComponent = root.GetComponent<EnvironmentRoot>();
             if (rootComponent != null) rootComponent.Asset = asset;
