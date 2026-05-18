@@ -44,20 +44,28 @@ namespace OpenApparatus.Unity.Editor.Internal
         {
             if (config == null || config.Source == null) return null;
 
-            var instance = BuildInstance(config);
-            if (instance == null) return null;
+            var apparatus = BuildInstance(config);
+            if (apparatus == null) return null;
 
-            string configPath = AssetDatabase.GetAssetPath(config);
-            string directory = string.IsNullOrEmpty(configPath)
+            // The prefab is a self-contained, scene-droppable handle: a root
+            // carrying ApparatusManager with the apparatus geometry as a child.
+            var prefabRoot = new GameObject(config.name);
+            prefabRoot.AddComponent<ApparatusManager>().Config = config;
+            apparatus.name = "Apparatus";
+            apparatus.transform.SetParent(prefabRoot.transform, worldPositionStays: false);
+
+            // Saved alongside the source apparatus asset.
+            string sourcePath = AssetDatabase.GetAssetPath(config.Source);
+            string directory = string.IsNullOrEmpty(sourcePath)
                 ? "Assets"
-                : Path.GetDirectoryName(configPath);
+                : Path.GetDirectoryName(sourcePath);
             string prefabPath = $"{directory}/{config.name}_Apparatus.prefab";
 
             // Delete first so each regenerate starts clean — otherwise the
             // embedded mesh/material sub-assets accumulate across rebuilds.
             AssetDatabase.DeleteAsset(prefabPath);
-            var prefab = PrefabUtility.SaveAsPrefabAsset(instance, prefabPath);
-            Object.DestroyImmediate(instance);
+            var prefab = PrefabUtility.SaveAsPrefabAsset(prefabRoot, prefabPath);
+            Object.DestroyImmediate(prefabRoot);
             if (prefab == null) return null;
 
             EmbedGeneratedAssets(prefab);

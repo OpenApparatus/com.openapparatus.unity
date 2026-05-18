@@ -9,11 +9,11 @@ namespace OpenApparatus.Unity.Editor.Inspectors
     [CustomEditor(typeof(ApparatusConfig))]
     public sealed class ApparatusConfigEditor : UnityEditor.Editor
     {
-        static readonly string[] Modes = { "Rooms", "Object Types" };
+        static readonly string[] Tabs = { "Apparatus", "Rooms", "Object Types" };
 
         ReorderableList _roomList;
         ReorderableList _objectList;
-        int _mode;
+        int _tab;
 
         void OnEnable()
         {
@@ -63,19 +63,36 @@ namespace OpenApparatus.Unity.Editor.Inspectors
         {
             var config = (ApparatusConfig)target;
 
-            // Generate the room / object-type lists from the source the first
-            // time one is assigned.
             if (config.Source != null && (config.Rooms == null || config.Rooms.Length == 0))
                 SyncFromSource(config);
 
             serializedObject.Update();
+
+            var titleStyle = new GUIStyle(EditorStyles.boldLabel) { fontSize = 15 };
+            EditorGUILayout.LabelField(config.name, titleStyle);
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("Source"),
+                    new GUIContent("Source"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("GeneratedPrefab"),
+                    new GUIContent("Prefab"));
+            }
+            EditorGUILayout.Space(6);
+
             EditorGUI.BeginChangeCheck();
 
-            DrawPropertiesExcluding(serializedObject, "m_Script", "Rooms", "ObjectTypes");
-
-            EditorGUILayout.Space();
-            _mode = GUILayout.Toolbar(_mode, Modes);
-            (_mode == 0 ? _roomList : _objectList).DoLayoutList();
+            _tab = GUILayout.Toolbar(_tab, Tabs);
+            EditorGUILayout.Space(4);
+            switch (_tab)
+            {
+                case 0:
+                    DrawPropertiesExcluding(serializedObject,
+                        "m_Script", "Source", "GeneratedPrefab", "Rooms", "ObjectTypes");
+                    break;
+                case 1: _roomList.DoLayoutList(); break;
+                case 2: _objectList.DoLayoutList(); break;
+            }
 
             bool changed = EditorGUI.EndChangeCheck();
             serializedObject.ApplyModifiedProperties();
@@ -102,7 +119,6 @@ namespace OpenApparatus.Unity.Editor.Inspectors
                     "Assign a Source apparatus (.oae / .oapp) to generate a prefab.",
                     MessageType.Info);
 
-            // Debounced regenerate: rebuild once the inspector settles.
             if (changed && config.Source != null)
                 ScheduleRegenerate(config);
         }
@@ -161,12 +177,11 @@ namespace OpenApparatus.Unity.Editor.Inspectors
 
         static void SpawnIntoScene(ApparatusConfig config)
         {
-            var go = new GameObject(config.name);
-            var manager = go.AddComponent<ApparatusManager>();
-            manager.Config = config;
-            manager.Spawn();
-            Undo.RegisterCreatedObjectUndo(go, "Spawn Apparatus");
-            Selection.activeGameObject = go;
+            if (config.GeneratedPrefab == null) return;
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(config.GeneratedPrefab);
+            if (instance == null) return;
+            Undo.RegisterCreatedObjectUndo(instance, "Spawn Apparatus");
+            Selection.activeGameObject = instance;
         }
     }
 }
