@@ -42,6 +42,9 @@ namespace OpenApparatus.Unity.Tests.Editor
                     if      (name == "WallCollider")    wallColliders++;
                     else if (name == "FloorCollider")   floorColliders++;
                     else if (name == "CeilingCollider") ceilingColliders++;
+                    // Object placeholders keep their CreatePrimitive collider
+                    // when the Objects flag is set; not a surface collider.
+                    else if (col.GetComponent<RoomObjectInstance>() != null) continue;
                     else Assert.Fail($"Unexpected BoxCollider parent: {name}");
                 }
                 Assert.AreEqual(expectedWallColliders, wallColliders, "wall collider count");
