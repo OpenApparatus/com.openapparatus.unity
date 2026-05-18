@@ -21,7 +21,7 @@ namespace OpenApparatus.Unity.Editor.Internal
             if (rootComponent != null) rootComponent.Asset = asset;
 
             SpawnObjects(root.transform, asset);
-            ApplyRoomVisuals(root.transform, asset);
+            ConfigureRooms(root.transform, asset);
 
             PrefabSubstitutionApplicator.Apply(root, asset.Substitution, asset.ObjectSlots);
             ColliderBuilder.Apply(root, asset.ColliderMode, asset.Parameters);
@@ -70,6 +70,9 @@ namespace OpenApparatus.Unity.Editor.Internal
             instance.Slot = od.Slot;
             instance.OwningRoomId = owningRoomId;
             instance.LocalRotationY = od.LocalRotationY;
+            instance.ObjectType = slot != null
+                ? (!string.IsNullOrEmpty(slot.ObjectType) ? slot.ObjectType : slot.DisplayName)
+                : null;
 
             var standIn = GameObject.CreatePrimitive(ChoosePrimitive(slot?.Shape));
             standIn.name = "StandIn";
@@ -105,16 +108,19 @@ namespace OpenApparatus.Unity.Editor.Internal
             };
         }
 
-        // Applies the .oapp editor-state extras: per-room palette colours tint
-        // each part's material, and room names extend the GameObject name. No-op
-        // for .oae imports, which carry neither.
-        static void ApplyRoomVisuals(Transform root, MultiRoomEnvironmentAsset asset)
+        // Wires per-room component data (wall list) and applies the .oapp
+        // editor-state extras: palette colours tint each part's material, and
+        // room names extend the GameObject name.
+        static void ConfigureRooms(Transform root, MultiRoomEnvironmentAsset asset)
         {
             if (asset.Rooms == null) return;
             foreach (var rd in asset.Rooms)
             {
                 var roomGo = root.Find($"Room_{rd.Id}");
                 if (roomGo == null) continue;
+
+                var room = roomGo.GetComponent<Room>();
+                if (room != null) room.Walls = rd.Walls;
 
                 Tint(roomGo, "Floor", asset.RoomFloorColors, rd.Id);
                 Tint(roomGo, "Walls", asset.RoomWallColors, rd.Id);
