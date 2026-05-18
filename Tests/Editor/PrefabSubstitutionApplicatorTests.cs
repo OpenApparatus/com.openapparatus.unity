@@ -8,7 +8,7 @@ namespace OpenApparatus.Unity.Tests.Editor
 {
     public sealed class PrefabSubstitutionApplicatorTests
     {
-        const string FixturePath = "Packages/com.openapparatus.unity/Tests/Fixtures/single_room.json";
+        const string FixturePath = "Packages/com.openapparatus.unity/Tests/Fixtures/single_room.oae";
 
         [Test]
         public void Apply_NullTable_LeavesPlaceholdersUntouched()

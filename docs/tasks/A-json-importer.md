@@ -7,7 +7,7 @@
 | Blocks | C (`.oapp` importer mirrors A's patterns) |
 | Effort | 2 days |
 | Repo | openapparatus-unity |
-| Files touched | `Editor/Importers/Json*.cs`, `Tests/Fixtures/single_room.json` |
+| Files touched | `Editor/Importers/Json*.cs`, `Tests/Fixtures/single_room.oae` |
 
 ## Goal
 
@@ -150,7 +150,7 @@ Tests/
 ├── Editor/
 │   └── JsonEnvironmentImporterTests.cs
 └── Fixtures/
-    └── single_room.json    ← fixture, ~50 lines, hand-written or Studio-exported
+    └── single_room.oae    ← fixture, ~50 lines, hand-written or Studio-exported
 ```
 
 At minimum:
@@ -166,7 +166,7 @@ At minimum:
 
 ## Acceptance criteria
 
-- `single_room.json` imports as `MultiRoomEnvironmentAsset` with one
+- `single_room.oae` imports as `MultiRoomEnvironmentAsset` with one
   Room sub-asset, one Mesh sub-asset, no errors.
 - A foreign `.json` (e.g. `package.json`) imports as `TextAsset` as
   before — the importer does not claim it.
@@ -189,7 +189,7 @@ At minimum:
 ```
 Verified by me:
 - All four unit tests pass. [how: ran Test Runner edit-mode]
-- Manually imported single_room.json and clicked Spawn; got expected
+- Manually imported single_room.oae and clicked Spawn; got expected
   hierarchy. [how: visual + hierarchy panel inspection]
 - Foreign .json files still import as TextAsset. [how: imported
   package.json]

@@ -6,12 +6,21 @@ here first.
 
 Authoritative source files in `openapparatus-core`:
 
-| Format | Schema source | Writer |
-|---|---|---|
-| JSON (semantic) | `src/OpenApparatus.IO/Exporters/JsonExporter.cs` | `JsonExporter.SchemaVersion = 3` |
-| `.oapp` (project) | `src/OpenApparatus.IO/ProjectFile.cs` | `ProjectIO.CurrentVersion = "1.0"` |
-| glTF (.glb / .gltf) | `src/OpenApparatus.IO/Exporters/GltfExporter.cs` | glTF 2.0 + naming convention |
-| OBJ + MTL | `src/OpenApparatus.IO/Exporters/ObjExporter.cs` | Wavefront; already handled by existing postprocessor |
+| Format | Extension | Schema source | Writer |
+|---|---|---|---|
+| Environment (semantic, JSON-formatted) | `.oae` | `src/OpenApparatus.IO/Exporters/JsonExporter.cs` | `JsonExporter.SchemaVersion = 3` |
+| Project | `.oapp` | `src/OpenApparatus.IO/ProjectFile.cs` | `ProjectIO.CurrentVersion = "1.0"` |
+| glTF | `.glb` / `.gltf` | `src/OpenApparatus.IO/Exporters/GltfExporter.cs` | glTF 2.0 + naming convention |
+| OBJ + MTL | `.obj` / `.mtl` | `src/OpenApparatus.IO/Exporters/ObjExporter.cs` | Wavefront; already handled by existing postprocessor |
+
+The environment format's file extension is **`.oae`** (OpenApparatus
+Environment), not `.json`. Unity claims `.json` natively, so a
+`ScriptedImporter` cannot register for it. The file's *contents* are
+still valid JSON — researchers can open in any text editor. See
+[ADR-0008](decisions.md#adr-0008-oae-extension-for-environment-files).
+Until `openapparatus-core` and `openapparatus-studio` are updated to
+write `.oae` by default, exporters write `.json` and users rename
+after export.
 
 ## Coordinate handedness
 
