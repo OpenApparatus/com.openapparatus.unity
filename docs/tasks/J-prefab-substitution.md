@@ -187,7 +187,7 @@ Using a programmatically-constructed asset (no fixture file needed):
   does not throw.
 - `PrefabSubstitutionTable` assets are creatable via Assets menu.
 - The `PrefabSubstitutionTableEditor` renders the entries table
-  without errors in Unity 2022.3.
+  without errors in Unity 6000.4.
 - All five tests pass.
 
 ## Out of scope

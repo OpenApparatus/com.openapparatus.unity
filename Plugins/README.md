@@ -1,7 +1,7 @@
 # Plugins
 
 `OpenApparatus.Core.dll` (netstandard2.1) is shipped here so the package
-compiles in a fresh Unity 2022.3 LTS project with no extra setup.
+compiles in a fresh Unity 6000.4 project with no extra setup.
 
 ## Rebuilding the DLL
 

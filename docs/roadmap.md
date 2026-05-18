@@ -133,7 +133,7 @@ are in [decisions.md § ADR-0007](decisions.md#adr-0007-studio-local-http-api-ra
 
 **Wave 1 done when:**
 
-- A fresh clone of the package compiles in a blank Unity 2022.3 LTS
+- A fresh clone of the package compiles in a blank Unity 6000.4
   project with no manual steps.
 - `EnvironmentRoot`, `Room`, `Wall`, `RoomObjectInstance`,
   `MultiRoomEnvironmentAsset`, `OpenApparatusSpace`,

@@ -139,7 +139,7 @@ trivial *on purpose* — its value is the convention, not the code.
 
 ## Acceptance criteria
 
-- `Runtime/` and `Editor/Internal/` compile in a fresh Unity 2022.3
+- `Runtime/` and `Editor/Internal/` compile in a fresh Unity 6000.4
   project with the Wave 1 F1 DLL committed.
 - A test ScriptableObject of type `MultiRoomEnvironmentAsset` can be
   created and serialised in a scene.
