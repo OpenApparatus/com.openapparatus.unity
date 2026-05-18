@@ -59,7 +59,7 @@ In the editor, every parameter change debounces into one rebuild via `OnValidate
 
 ## Unity compatibility
 
-Targets **Unity 2022.3 LTS** and newer. The bundled Core DLL is built against `netstandard2.1`.
+Targets **Unity 6000.4** and newer. The bundled Core DLL is built against `netstandard2.1`.
 
 ## Related repos
 

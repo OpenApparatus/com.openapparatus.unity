@@ -127,7 +127,7 @@ hard-code material paths.
 ## Core DLL delivery
 
 `Plugins/OpenApparatus.Core.dll` ships with the package, built against
-`netstandard2.1` to keep Unity 2022.3 LTS compatibility. Contributors
+`netstandard2.1` to keep Unity 6000.4 compatibility. Contributors
 with a sibling `openapparatus-core/` clone rebuild via
 `build/publish-core-dll.ps1` (or `.sh`). The committed binary means
 end-users don't run a build script on first install.
