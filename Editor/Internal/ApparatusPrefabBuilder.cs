@@ -62,14 +62,18 @@ namespace OpenApparatus.Unity.Editor.Internal
                 : Path.GetDirectoryName(sourcePath);
             string prefabPath = $"{directory}/{config.name}_Apparatus.prefab";
 
-            // Delete first so each regenerate starts clean — otherwise the
-            // embedded mesh/material sub-assets accumulate across rebuilds.
+            // The geometry meshes and synthesized/tinted materials are created at
+            // build time (new Mesh / new Material) and are not assets. Persist
+            // them as sub-assets of the config *before* the prefab is saved —
+            // SaveAsPrefabAsset drops references to transient objects, so
+            // embedding after the save would be too late (the prefab's
+            // MeshFilter/Renderer references are already null by then).
+            PersistGeneratedAssets(prefabRoot, config);
+
             AssetDatabase.DeleteAsset(prefabPath);
             var prefab = PrefabUtility.SaveAsPrefabAsset(prefabRoot, prefabPath);
             Object.DestroyImmediate(prefabRoot);
             if (prefab == null) return null;
-
-            EmbedGeneratedAssets(prefab);
 
             config.GeneratedPrefab = prefab;
             EditorUtility.SetDirty(config);
@@ -84,40 +88,38 @@ namespace OpenApparatus.Unity.Editor.Internal
             return prefab;
         }
 
-        // The geometry meshes and tinted materials are created at build time
-        // (new Mesh / new Material) and are not assets, so a saved prefab's
-        // references to them would dangle. Embed them as sub-assets of the
-        // prefab so the floors / walls / ceilings persist.
-        static void EmbedGeneratedAssets(GameObject prefab)
+        // Persists the build-time meshes and materials referenced by the tree as
+        // sub-assets of the config, so the prefab saved next serialises real
+        // asset references. Old sub-assets from a previous regenerate are purged
+        // first — otherwise they accumulate across rebuilds.
+        static void PersistGeneratedAssets(GameObject prefabRoot, ApparatusConfig config)
         {
-            var seen = new HashSet<Object>();
+            string configPath = AssetDatabase.GetAssetPath(config);
+            if (string.IsNullOrEmpty(configPath)) return;
 
-            foreach (var filter in prefab.GetComponentsInChildren<MeshFilter>(true))
-                Embed(filter.sharedMesh, prefab, seen);
-            foreach (var renderer in prefab.GetComponentsInChildren<Renderer>(true))
+            foreach (var existing in AssetDatabase.LoadAllAssetsAtPath(configPath))
+                if (existing != config && (existing is Mesh || existing is Material))
+                    Object.DestroyImmediate(existing, allowDestroyingAssets: true);
+
+            var seen = new HashSet<Object>();
+            foreach (var filter in prefabRoot.GetComponentsInChildren<MeshFilter>(true))
+                Persist(filter.sharedMesh, config, seen);
+            foreach (var renderer in prefabRoot.GetComponentsInChildren<Renderer>(true))
                 foreach (var material in renderer.sharedMaterials)
-                    Embed(material, prefab, seen);
+                    Persist(material, config, seen);
 
             AssetDatabase.SaveAssets();
-            AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(prefab));
         }
 
-        // Embeds a build-time object (empty asset path) as a sub-asset of the
-        // prefab. Skips built-in resources and already-saved assets — calling
-        // AddObjectToAsset on those throws, which would otherwise abort the
-        // whole pass and leave later objects (e.g. materials) unembedded.
-        static void Embed(Object obj, GameObject prefab, HashSet<Object> seen)
+        // Adds a build-time object (empty asset path) as a sub-asset of the
+        // config. Built-in resources (StandIn primitive meshes) and already-saved
+        // assets (authored materials, substituted prefab meshes) report a
+        // non-empty asset path and are left to keep their own references.
+        static void Persist(Object obj, ApparatusConfig config, HashSet<Object> seen)
         {
             if (obj == null || !seen.Add(obj)) return;
             if (!string.IsNullOrEmpty(AssetDatabase.GetAssetPath(obj))) return;
-            try
-            {
-                AssetDatabase.AddObjectToAsset(obj, prefab);
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogWarning($"[OpenApparatus] Could not embed '{obj.name}': {e.Message}");
-            }
+            AssetDatabase.AddObjectToAsset(obj, config);
         }
 
         // ---- Per-room configuration ----

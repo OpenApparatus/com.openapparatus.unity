@@ -35,7 +35,6 @@ namespace OpenApparatus.Unity
         public GameObject DefaultWindowPrefab;
         public RoomConfig[] Rooms;
 
-        [Header("Output")]
         [Tooltip("Prefab generated from this config; regenerated when settings change.")]
         public GameObject GeneratedPrefab;
     }
