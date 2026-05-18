@@ -48,14 +48,14 @@ The sample serves three purposes:
 ```
 Samples~/
 └── ImportedEnvironment/
-    ├── single_room.json          ← Studio export, ~50 lines
+    ├── single_room.oae          ← Studio export, ~50 lines
     ├── ImportedEnvironment.unity ← scene with EnvironmentRoot already spawned
     └── README.md                 ← three-line orientation
 ```
 
 The scene should:
 
-- Reference `single_room.json` as an imported asset (so opening the
+- Reference `single_room.oae` as an imported asset (so opening the
   scene triggers the import if not already done).
 - Have one `EnvironmentRoot` GameObject with the spawned tree as
   children.
@@ -113,7 +113,7 @@ Verified by me:
 - Import copies the files to the expected location. [how: file
   system check]
 - The .unity scene opens with no console errors. [how: visual]
-- The single_room.json file matches the format-contracts.md spec
+- The single_room.oae file matches the format-contracts.md spec
   exactly. [how: round-trip through Studio]
 
 Needs your eyes:

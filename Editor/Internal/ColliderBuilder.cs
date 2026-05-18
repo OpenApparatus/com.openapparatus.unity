@@ -4,9 +4,10 @@ namespace OpenApparatus.Unity.Editor.Internal
 {
     public static class ColliderBuilder
     {
-        const string WallColliderChildName = "WallCollider";
-        const string FloorCollidersChildName = "FloorColliders";
-        const float FloorColliderThickness = 0.1f;
+        const string WallColliderChildName    = "WallCollider";
+        const string FloorColliderChildName   = "FloorCollider";
+        const string CeilingColliderChildName = "CeilingCollider";
+        const float SurfaceColliderThickness  = 0.1f;
 
         public static void Apply(GameObject environmentRoot,
                                  ColliderMode mode,
@@ -14,16 +15,25 @@ namespace OpenApparatus.Unity.Editor.Internal
         {
             if (mode == ColliderMode.None || environmentRoot == null || parameters == null) return;
 
-            bool doWalls  = mode == ColliderMode.WallsOnly  || mode == ColliderMode.All;
-            bool doFloors = mode == ColliderMode.FloorsOnly || mode == ColliderMode.All;
-
-            if (doWalls)
+            if ((mode & ColliderMode.Walls) != 0)
                 foreach (var wall in environmentRoot.GetComponentsInChildren<Wall>(includeInactive: true))
                     AddWallCollider(wall, parameters);
 
-            if (doFloors)
+            if ((mode & (ColliderMode.Floors | ColliderMode.Ceilings)) != 0)
                 foreach (var room in environmentRoot.GetComponentsInChildren<Room>(includeInactive: true))
-                    AddFloorColliders(room, parameters);
+                {
+                    if ((mode & ColliderMode.Floors) != 0)
+                        AddSurfaceCollider(room, "Floor", FloorColliderChildName,
+                                           parameters, atCeiling: false);
+                    if ((mode & ColliderMode.Ceilings) != 0)
+                        AddSurfaceCollider(room, "Ceiling", CeilingColliderChildName,
+                                           parameters, atCeiling: true);
+                }
+
+            // Placeholder colliders (ColliderMode.Objects) are owned by the
+            // spawner, not by this pass. Spawner removes the primitive's
+            // default collider when the flag is off; substituted prefabs are
+            // never touched (prefab author decides).
         }
 
         static void AddWallCollider(Wall wall, EnvironmentParameters parameters)
@@ -48,23 +58,39 @@ namespace OpenApparatus.Unity.Editor.Internal
             col.size = new Vector3(length, parameters.WallHeight, parameters.WallThickness);
         }
 
-        static void AddFloorColliders(Room room, EnvironmentParameters parameters)
+        // One BoxCollider per tile, all attached to a single child node under
+        // the room's Floor or Ceiling surface object. Floor sits a hair below
+        // y=0; ceiling sits a hair above wallHeight — both flush with the
+        // visible mesh but invisible to the agent.
+        static void AddSurfaceCollider(Room room,
+                                       string surfaceChildName,
+                                       string colliderChildName,
+                                       EnvironmentParameters parameters,
+                                       bool atCeiling)
         {
             if (room.TileIndices == null || room.TileIndices.Length == 0) return;
 
-            ClearExistingChild(room.transform, FloorCollidersChildName);
+            var surface = room.transform.Find(surfaceChildName);
+            if (surface == null) return;
 
-            var holder = new GameObject(FloorCollidersChildName);
-            holder.transform.SetParent(room.transform, worldPositionStays: false);
+            ClearExistingChild(surface, colliderChildName);
+            var holder = new GameObject(colliderChildName);
+            holder.transform.SetParent(surface, worldPositionStays: false);
 
             float t = parameters.TileSize;
+            float colliderCenterY = atCeiling
+                ? parameters.WallHeight + SurfaceColliderThickness * 0.5f
+                : -SurfaceColliderThickness * 0.5f;
+
+            // Tile indices are Studio coords; mirror X to share the room's
+            // Unity-space frame (same as the floor/ceiling mesh builder).
             foreach (var idx in room.TileIndices)
             {
                 var col = holder.AddComponent<BoxCollider>();
-                col.size = new Vector3(t, FloorColliderThickness, t);
+                col.size = new Vector3(t, SurfaceColliderThickness, t);
                 col.center = new Vector3(
-                    (idx.x + 0.5f) * t,
-                    -FloorColliderThickness * 0.5f,
+                    -(idx.x + 0.5f) * t,
+                    colliderCenterY,
                     (idx.y + 0.5f) * t);
             }
         }

@@ -255,7 +255,7 @@ document the manual procedure in the verification checklist.
 ```
 Verified by me:
 - All five StudioDiscoveryTests pass. [how: ran Test Runner edit-mode]
-- Manual end-to-end: launched Studio, imported single_room.json into a
+- Manual end-to-end: launched Studio, imported single_room.oae into a
   Unity project, clicked Export GLB via Studio, observed single_room.glb
   appear next to it with Room and Wall components attached after
   Unity's reimport. [how: hierarchy + asset inspection]

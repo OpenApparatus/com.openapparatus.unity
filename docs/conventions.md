@@ -59,8 +59,10 @@ stays as-is — Wave 2 doesn't refactor existing code without reason.
 
 - One public type per `.cs` file. Filename matches the type.
 - Test files: `<ClassUnderTest>Tests.cs`.
-- Fixture files: `<scenario>.json` / `<scenario>.oapp`, descriptive
-  not numeric (`single_room.json`, not `test1.json`).
+- Fixture files: `<scenario>.oae` / `<scenario>.oapp`, descriptive
+  not numeric (`single_room.oae`, not `test1.oae`). The `.oae`
+  (OpenApparatus Environment) extension replaces an earlier `.json`
+  plan — see [ADR-0008](decisions.md#adr-0008-oae-extension-for-environment-files).
 
 ## Component schemas
 
@@ -109,11 +111,31 @@ public sealed class RoomObjectInstance : MonoBehaviour
     public float LocalRotationY;       // radians
 }
 
-public enum ColliderMode { None, WallsOnly, FloorsOnly, All }
+[Flags]
+public enum ColliderMode
+{
+    None     = 0,
+    Walls    = 1 << 0,    // BoxCollider per Wall, sized + oriented to the wall segment
+    Floors   = 1 << 1,    // BoxCollider per tile, under each Room's Floor child
+    Ceilings = 1 << 2,    // BoxCollider per tile, under each Room's Ceiling child
+    Objects  = 1 << 3,    // Keep the primitive collider on placeholder objects
+    All      = Walls | Floors | Ceilings | Objects,
+}
 
 // MultiRoomEnvironmentAsset carries these two fields (added for tasks I and J):
 //   public ColliderMode ColliderMode;
 //   public PrefabSubstitutionTable Substitution;   // null = no substitution
+
+// Spawn structure under each Room:
+//   Room_X/
+//     Floor                ← MeshRenderer
+//       FloorCollider      ← BoxCollider(s), one per tile  (Floors flag)
+//     Ceiling              ← MeshRenderer
+//       CeilingCollider    ← BoxCollider(s), one per tile  (Ceilings flag)
+//     Wall_N/              ← MeshRenderer + Wall component
+//       WallCollider       ← BoxCollider                   (Walls flag)
+//     Object_SlotN         ← primitive + RoomObjectInstance (collider iff Objects flag)
+//                            or substituted prefab + RoomObjectInstance marker
 
 public sealed class PrefabSubstitutionTable : ScriptableObject
 {

@@ -11,7 +11,7 @@
 
 ## Goal
 
-A fresh clone of the package compiles in a blank Unity 2022.3 LTS
+A fresh clone of the package compiles in a blank Unity 6000.4
 project with no manual steps. End state: `Plugins/OpenApparatus.Core.dll`
 is committed (netstandard2.1 build), a build script can regenerate it
 from a sibling `openapparatus-core/` clone, and the README's Quick
@@ -58,7 +58,7 @@ for the choice of committed-binary delivery.
 
 ## Acceptance criteria
 
-- `git clone` the package into a fresh Unity 2022.3 LTS project's
+- `git clone` the package into a fresh Unity 6000.4 project's
   `Packages/` folder. Unity opens with no compile errors. The
   `MultiRoomEnvironmentInstance` component is available.
 - Running `build/publish-core-dll.ps1` from a fresh checkout (with
@@ -83,7 +83,7 @@ Before opening the PR, the agent should be able to fill this in:
 
 ```
 Verified by me:
-- Fresh Unity 2022.3 project compiles with no errors. [how: tested locally]
+- Fresh Unity 6000.4 project compiles with no errors. [how: tested locally]
 - publish-core-dll.ps1 regenerates an identical DLL. [how: diffed before/after]
 - publish-core-dll.sh runs on [your platform if not Windows].
 
