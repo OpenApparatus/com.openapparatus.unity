@@ -38,3 +38,6 @@ Thumbs.db
 
 # Session worktrees from Claude Code agent runs.
 .claude/
+
+# Test Runner exported results.
+/Tests/TestResults*
