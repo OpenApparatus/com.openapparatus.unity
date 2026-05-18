@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 
 namespace OpenApparatus.Unity.Editor.Internal
@@ -73,6 +74,13 @@ namespace OpenApparatus.Unity.Editor.Internal
             config.GeneratedPrefab = prefab;
             EditorUtility.SetDirty(config);
             AssetDatabase.SaveAssetIfDirty(config);
+
+            // If the prefab is open in Prefab Mode, reopen the stage so the
+            // Scene view reflects the regenerated content.
+            var stage = PrefabStageUtility.GetCurrentPrefabStage();
+            if (stage != null && stage.assetPath == prefabPath)
+                PrefabStageUtility.OpenPrefab(prefabPath);
+
             return prefab;
         }
 

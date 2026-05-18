@@ -40,7 +40,7 @@ namespace OpenApparatus.Unity.Editor.Importers
             using (new EditorGUI.DisabledScope(asset == null))
             {
                 if (GUILayout.Button("Create Apparatus", GUILayout.Height(28)))
-                    ApparatusWizard.CreateFor(importer.assetPath, asset);
+                    ApparatusWizardOverlay.CreateFor(importer.assetPath, asset);
             }
         }
 
