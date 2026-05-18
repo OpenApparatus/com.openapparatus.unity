@@ -1,0 +1,79 @@
+{
+  "schema": "openapparatus.environment",
+  "version": 4,
+  "parameters": {
+    "tileSize": 3.5,
+    "wallThickness": 0.2,
+    "wallHeight": 3.0,
+    "doorWidth": 1.2,
+    "doorHeight": 2.2,
+    "windowWidth": 1.2,
+    "windowHeight": 2.1,
+    "windowSillHeight": 0.9,
+    "gridSubdivision": 1,
+    "defaultObjectY": 0.0
+  },
+  "grid": {
+    "width": 2,
+    "length": 2,
+    "tiles": [[0, 0], [0, 0]]
+  },
+  "objectSlots": [
+    { "id": 1, "shape": "cube", "color": [0.9, 0.4, 0.4], "size": 0.3, "displayName": "Cup", "objectType": "Cup" }
+  ],
+  "rooms": [
+    {
+      "id": 0,
+      "shape": { "type": "rectangle", "width": 7.0, "depth": 7.0 },
+      "position": [0.0, 0.0],
+      "tiles": [[0, 0], [1, 0], [0, 1], [1, 1]],
+      "walls": [
+        {
+          "number": 1,
+          "side": "south",
+          "start": [0.0, 0.0],
+          "end":   [7.0, 0.0],
+          "neighborRoomId": null,
+          "passage": { "type": "closed" }
+        },
+        {
+          "number": 2,
+          "side": "east",
+          "start": [7.0, 0.0],
+          "end":   [7.0, 7.0],
+          "neighborRoomId": null,
+          "passage": {
+            "type": "doorway",
+            "openings": [
+              { "offsetAlongEdge": 2.9, "width": 1.2, "height": 2.1, "sillHeight": 0.9 }
+            ]
+          }
+        },
+        {
+          "number": 3,
+          "side": "north",
+          "start": [7.0, 7.0],
+          "end":   [0.0, 7.0],
+          "neighborRoomId": null,
+          "passage": {
+            "type": "doorway",
+            "openings": [
+              { "offsetAlongEdge": 2.9, "width": 1.2, "height": 2.2, "sillHeight": 0.0 }
+            ]
+          }
+        },
+        {
+          "number": 4,
+          "side": "west",
+          "start": [0.0, 7.0],
+          "end":   [0.0, 0.0],
+          "neighborRoomId": null,
+          "passage": { "type": "closed" }
+        }
+      ],
+      "objects": [
+        { "slot": 1, "position": [3.5, 0.0, 3.5], "rotation": 0.0 }
+      ]
+    }
+  ]
+}
