@@ -29,6 +29,11 @@ namespace OpenApparatus.Unity.Editor.Importers
         public List<OappPassageOverride> passageOverrides;
         public List<OappObjectType> objectTypes;
         public List<OappObjectInstance> objects;
+
+        public Dictionary<int, string> roomNames;
+        public Dictionary<int, float[]> roomFloorColors;
+        public Dictionary<int, float[]> roomCeilingColors;
+        public Dictionary<int, float[]> roomSingleWallColors;
     }
 
     internal sealed class OappPassageOverride

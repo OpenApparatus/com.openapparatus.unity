@@ -39,6 +39,35 @@ namespace OpenApparatus.Unity.Tests.Editor
         }
 
         [Test]
+        public void Import_StoresRoomNamesAndColors()
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<MultiRoomEnvironmentAsset>(FixturePath);
+            Assert.AreEqual(1, asset.RoomNames.Length);
+            Assert.AreEqual(0, asset.RoomNames[0].RoomId);
+            Assert.AreEqual("TestRoom", asset.RoomNames[0].Name);
+            Assert.AreEqual(1, asset.RoomFloorColors.Length);
+            Assert.AreEqual(1, asset.RoomCeilingColors.Length);
+            Assert.AreEqual(1, asset.RoomWallColors.Length);
+        }
+
+        [Test]
+        public void Spawn_AppliesRoomNameToGameObject()
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<MultiRoomEnvironmentAsset>(FixturePath);
+            GameObject root = null;
+            try
+            {
+                root = EnvironmentSpawner.Spawn(asset);
+                Assert.IsNotNull(root.transform.Find("Room_0_TestRoom"),
+                    "the room GameObject should carry its .oapp name");
+            }
+            finally
+            {
+                if (root != null) Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
         public void Spawn_ProducesRoomWithParts()
         {
             var asset = AssetDatabase.LoadAssetAtPath<MultiRoomEnvironmentAsset>(FixturePath);

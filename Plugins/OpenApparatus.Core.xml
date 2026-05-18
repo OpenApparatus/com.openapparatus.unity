@@ -87,6 +87,10 @@
         <member name="M:OpenApparatus.Geometry.BoundaryWallBuilder.EmitBottomStrip(OpenApparatus.Geometry.MeshDataBuilder,OpenApparatus.Geometry.BoundaryWallBuilder.SlabFrame,System.Single,System.Single)">
             <summary>Emits the bottom face strip [xStart, xEnd] at y=0 (normal -Y).</summary>
         </member>
+        <member name="M:OpenApparatus.Geometry.BoundaryWallBuilder.Extend(OpenApparatus.EdgeSegment,System.Single)">
+            <summary>Lengthens a segment by <paramref name="d"/> at each end, keeping
+            its direction — used to overlap walls at corners.</summary>
+        </member>
         <member name="T:OpenApparatus.Geometry.BoundaryWallBuilder.SlabFrame">
             <summary>
             A coordinate frame for a wall slab: an origin (segment start), a "direction"

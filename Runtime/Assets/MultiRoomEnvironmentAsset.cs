@@ -11,6 +11,20 @@ namespace OpenApparatus.Unity
         public Mesh Mesh;
     }
 
+    [Serializable]
+    public struct RoomNameEntry
+    {
+        public int RoomId;
+        public string Name;
+    }
+
+    [Serializable]
+    public struct RoomColorEntry
+    {
+        public int RoomId;
+        public Color Color;
+    }
+
     public sealed class MultiRoomEnvironmentAsset : ScriptableObject
     {
         public int SchemaVersion;
@@ -25,6 +39,12 @@ namespace OpenApparatus.Unity
         public int[] RoomGrid;
         public int GridWidth;
         public int GridLength;
+
+        // Editor-state extras carried by .oapp projects (empty for .oae imports).
+        public RoomNameEntry[] RoomNames;
+        public RoomColorEntry[] RoomFloorColors;
+        public RoomColorEntry[] RoomCeilingColors;
+        public RoomColorEntry[] RoomWallColors;
 
         [SerializeField] private List<RoomMeshEntry> _roomMeshes = new List<RoomMeshEntry>();
 

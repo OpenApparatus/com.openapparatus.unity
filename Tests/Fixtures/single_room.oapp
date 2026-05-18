@@ -29,5 +29,9 @@
   ],
   "objects": [
     { "slot": 1, "owningRoomId": 0, "x": 3.5, "y": 0.0, "z": 3.5, "rotation": 0.0 }
-  ]
+  ],
+  "roomNames": { "0": "TestRoom" },
+  "roomFloorColors": { "0": [0.3, 0.6, 0.3] },
+  "roomCeilingColors": { "0": [0.6, 0.6, 0.7] },
+  "roomSingleWallColors": { "0": [0.7, 0.4, 0.4] }
 }

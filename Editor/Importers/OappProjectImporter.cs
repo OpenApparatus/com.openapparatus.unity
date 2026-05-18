@@ -79,6 +79,11 @@ namespace OpenApparatus.Unity.Editor.Importers
             asset.Rooms = EnvironmentTopology.BuildRoomData(plan, grid);
             AssignObjects(asset, doc.objects);
 
+            asset.RoomNames = MapNames(doc.roomNames);
+            asset.RoomFloorColors = MapColors(doc.roomFloorColors);
+            asset.RoomCeilingColors = MapColors(doc.roomCeilingColors);
+            asset.RoomWallColors = MapColors(doc.roomSingleWallColors);
+
             asset.ColliderMode = ColliderMode;
             asset.Substitution = Substitution;
 
@@ -201,6 +206,30 @@ namespace OpenApparatus.Unity.Editor.Importers
                     ? list.ToArray()
                     : Array.Empty<ObjectInstanceData>();
             asset.OutsideObjects = outside.ToArray();
+        }
+
+        static RoomNameEntry[] MapNames(Dictionary<int, string> names)
+        {
+            if (names == null) return Array.Empty<RoomNameEntry>();
+            var result = new List<RoomNameEntry>(names.Count);
+            foreach (var kv in names)
+                if (!string.IsNullOrEmpty(kv.Value))
+                    result.Add(new RoomNameEntry { RoomId = kv.Key, Name = kv.Value });
+            return result.ToArray();
+        }
+
+        static RoomColorEntry[] MapColors(Dictionary<int, float[]> colors)
+        {
+            if (colors == null) return Array.Empty<RoomColorEntry>();
+            var result = new List<RoomColorEntry>(colors.Count);
+            foreach (var kv in colors)
+                if (kv.Value != null && kv.Value.Length >= 3)
+                    result.Add(new RoomColorEntry
+                    {
+                        RoomId = kv.Key,
+                        Color = new Color(kv.Value[0], kv.Value[1], kv.Value[2]),
+                    });
+            return result.ToArray();
         }
     }
 }

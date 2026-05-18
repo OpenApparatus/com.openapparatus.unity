@@ -21,6 +21,7 @@ namespace OpenApparatus.Unity.Editor.Internal
             if (rootComponent != null) rootComponent.Asset = asset;
 
             SpawnObjects(root.transform, asset);
+            ApplyRoomVisuals(root.transform, asset);
 
             PrefabSubstitutionApplicator.Apply(root, asset.Substitution, asset.ObjectSlots);
             ColliderBuilder.Apply(root, asset.ColliderMode, asset.Parameters);
@@ -98,6 +99,55 @@ namespace OpenApparatus.Unity.Editor.Internal
                 "capsule" => PrimitiveType.Capsule,
                 _ => PrimitiveType.Cube,
             };
+        }
+
+        // Applies the .oapp editor-state extras: per-room palette colours tint
+        // each part's material, and room names extend the GameObject name. No-op
+        // for .oae imports, which carry neither.
+        static void ApplyRoomVisuals(Transform root, MultiRoomEnvironmentAsset asset)
+        {
+            if (asset.Rooms == null) return;
+            foreach (var rd in asset.Rooms)
+            {
+                var roomGo = root.Find($"Room_{rd.Id}");
+                if (roomGo == null) continue;
+
+                Tint(roomGo, "Floor", asset.RoomFloorColors, rd.Id);
+                Tint(roomGo, "Walls", asset.RoomWallColors, rd.Id);
+                Tint(roomGo, "Ceiling", asset.RoomCeilingColors, rd.Id);
+
+                var name = FindRoomName(asset.RoomNames, rd.Id);
+                if (!string.IsNullOrEmpty(name))
+                    roomGo.gameObject.name = $"Room_{rd.Id}_{name.Trim()}";
+            }
+        }
+
+        static void Tint(Transform room, string partName, RoomColorEntry[] colors, int roomId)
+        {
+            if (colors == null) return;
+            bool found = false;
+            Color color = default;
+            foreach (var c in colors)
+                if (c.RoomId == roomId) { color = c.Color; found = true; break; }
+            if (!found) return;
+
+            var part = room.Find(partName);
+            if (part == null) return;
+            var mr = part.GetComponent<MeshRenderer>();
+            if (mr == null || mr.sharedMaterial == null) return;
+
+            // Instance the material so tinting one room never alters another.
+            var tinted = new Material(mr.sharedMaterial) { name = mr.sharedMaterial.name };
+            tinted.color = color;
+            mr.sharedMaterial = tinted;
+        }
+
+        static string FindRoomName(RoomNameEntry[] names, int roomId)
+        {
+            if (names == null) return null;
+            foreach (var n in names)
+                if (n.RoomId == roomId) return n.Name;
+            return null;
         }
     }
 }
