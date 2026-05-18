@@ -10,10 +10,10 @@ namespace OpenApparatus.Unity.Tests.Editor
         const string FixturePath = "Packages/com.openapparatus.unity/Tests/Fixtures/single_room.oapp";
 
         [Test]
-        public void Import_ProducesMultiRoomEnvironmentAsset()
+        public void Import_ProducesApparatusAsset()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<MultiRoomEnvironmentAsset>(FixturePath);
-            Assert.IsNotNull(asset, "single_room.oapp should import as MultiRoomEnvironmentAsset.");
+            var asset = AssetDatabase.LoadAssetAtPath<ApparatusAsset>(FixturePath);
+            Assert.IsNotNull(asset, "single_room.oapp should import as ApparatusAsset.");
             Assert.AreEqual(1, asset.Rooms.Length);
             Assert.AreEqual(4, asset.Rooms[0].Walls.Length);
             Assert.AreEqual(1, asset.Rooms[0].Objects.Length);
@@ -22,7 +22,7 @@ namespace OpenApparatus.Unity.Tests.Editor
         [Test]
         public void Import_StoresRoomGrid()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<MultiRoomEnvironmentAsset>(FixturePath);
+            var asset = AssetDatabase.LoadAssetAtPath<ApparatusAsset>(FixturePath);
             Assert.AreEqual(2, asset.GridWidth);
             Assert.AreEqual(2, asset.GridLength);
             Assert.AreEqual(4, asset.RoomGrid.Length);
@@ -31,7 +31,7 @@ namespace OpenApparatus.Unity.Tests.Editor
         [Test]
         public void Import_AppliesDoorwayFromPassageOverride()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<MultiRoomEnvironmentAsset>(FixturePath);
+            var asset = AssetDatabase.LoadAssetAtPath<ApparatusAsset>(FixturePath);
             int doorways = 0;
             foreach (var w in asset.Rooms[0].Walls)
                 if (w.PassageKind == PassageKind.Doorway) doorways++;
@@ -41,7 +41,7 @@ namespace OpenApparatus.Unity.Tests.Editor
         [Test]
         public void Import_StoresRoomNamesAndColors()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<MultiRoomEnvironmentAsset>(FixturePath);
+            var asset = AssetDatabase.LoadAssetAtPath<ApparatusAsset>(FixturePath);
             Assert.AreEqual(1, asset.RoomNames.Length);
             Assert.AreEqual(0, asset.RoomNames[0].RoomId);
             Assert.AreEqual("TestRoom", asset.RoomNames[0].Name);
@@ -53,7 +53,7 @@ namespace OpenApparatus.Unity.Tests.Editor
         [Test]
         public void Spawn_AppliesRoomNameToGameObject()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<MultiRoomEnvironmentAsset>(FixturePath);
+            var asset = AssetDatabase.LoadAssetAtPath<ApparatusAsset>(FixturePath);
             GameObject root = null;
             try
             {
@@ -70,7 +70,7 @@ namespace OpenApparatus.Unity.Tests.Editor
         [Test]
         public void Spawn_ProducesRoomWithParts()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<MultiRoomEnvironmentAsset>(FixturePath);
+            var asset = AssetDatabase.LoadAssetAtPath<ApparatusAsset>(FixturePath);
             GameObject root = null;
             try
             {

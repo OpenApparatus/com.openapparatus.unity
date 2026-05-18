@@ -45,7 +45,7 @@ namespace OpenApparatus.Unity.Editor.Importers
             }
             if (doc == null) return;
 
-            var asset = ScriptableObject.CreateInstance<MultiRoomEnvironmentAsset>();
+            var asset = ScriptableObject.CreateInstance<ApparatusAsset>();
             asset.name = Path.GetFileNameWithoutExtension(ctx.assetPath);
             asset.SchemaVersion = doc.version;
             asset.Parameters = MapParameters(doc.parameters);

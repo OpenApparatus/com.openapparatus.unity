@@ -5,7 +5,7 @@ namespace OpenApparatus.Unity.Editor.Internal
 {
     public static class EnvironmentSpawner
     {
-        public static GameObject Spawn(MultiRoomEnvironmentAsset asset)
+        public static GameObject Spawn(ApparatusAsset asset)
         {
             if (asset == null) return null;
 
@@ -30,7 +30,7 @@ namespace OpenApparatus.Unity.Editor.Internal
             return root;
         }
 
-        static void SpawnObjects(Transform root, MultiRoomEnvironmentAsset asset)
+        static void SpawnObjects(Transform root, ApparatusAsset asset)
         {
             if (asset.Rooms != null)
             {
@@ -54,7 +54,7 @@ namespace OpenApparatus.Unity.Editor.Internal
         }
 
         static void SpawnObject(Transform parent, ObjectInstanceData od, int owningRoomId,
-                                MultiRoomEnvironmentAsset asset)
+                                ApparatusAsset asset)
         {
             var slot = ResolveSlot(asset.ObjectSlots, od.Slot);
 
@@ -111,7 +111,7 @@ namespace OpenApparatus.Unity.Editor.Internal
         // Wires per-room component data (wall list) and applies the .oapp
         // editor-state extras: palette colours tint each part's material, and
         // room names extend the GameObject name.
-        static void ConfigureRooms(Transform root, MultiRoomEnvironmentAsset asset)
+        static void ConfigureRooms(Transform root, ApparatusAsset asset)
         {
             if (asset.Rooms == null) return;
             foreach (var rd in asset.Rooms)

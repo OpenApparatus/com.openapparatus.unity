@@ -25,7 +25,7 @@ namespace OpenApparatus.Unity
         public Color Color;
     }
 
-    public sealed class MultiRoomEnvironmentAsset : ScriptableObject
+    public sealed class ApparatusAsset : ScriptableObject
     {
         public int SchemaVersion;
         public EnvironmentParameters Parameters = new EnvironmentParameters();

@@ -9,7 +9,7 @@ namespace OpenApparatus.Unity.Editor.Internal
 {
     /// <summary>
     /// Rebuilds the Core <see cref="MultiRoomEnvironment"/> from a
-    /// <see cref="MultiRoomEnvironmentAsset"/>: derives topology from the stored
+    /// <see cref="ApparatusAsset"/>: derives topology from the stored
     /// room grid via <see cref="MultiRoomEnvironmentBuilder.FromGrid"/>, then
     /// applies each adjacency's passage from the matching imported wall. This is
     /// the bridge from the imported asset to the Core-backed geometry pipeline.
@@ -18,7 +18,7 @@ namespace OpenApparatus.Unity.Editor.Internal
     {
         const float MatchEpsilon = 1e-3f;
 
-        public static MultiRoomEnvironment Rebuild(MultiRoomEnvironmentAsset asset)
+        public static MultiRoomEnvironment Rebuild(ApparatusAsset asset)
         {
             var grid = ToGrid(asset);
             var plan = MultiRoomEnvironmentBuilder.FromGrid(grid, asset.Parameters.TileSize);
@@ -27,7 +27,7 @@ namespace OpenApparatus.Unity.Editor.Internal
         }
 
         /// <summary>Unflattens the asset's row-major RoomGrid into an [x, z] array.</summary>
-        public static int[,] ToGrid(MultiRoomEnvironmentAsset asset)
+        public static int[,] ToGrid(ApparatusAsset asset)
         {
             int w = Mathf.Max(0, asset.GridWidth);
             int l = Mathf.Max(0, asset.GridLength);
@@ -42,7 +42,7 @@ namespace OpenApparatus.Unity.Editor.Internal
             return grid;
         }
 
-        static void ApplyPassages(MultiRoomEnvironment plan, MultiRoomEnvironmentAsset asset)
+        static void ApplyPassages(MultiRoomEnvironment plan, ApparatusAsset asset)
         {
             if (asset.Rooms == null) return;
             var roomsById = new Dictionary<int, RoomData>();

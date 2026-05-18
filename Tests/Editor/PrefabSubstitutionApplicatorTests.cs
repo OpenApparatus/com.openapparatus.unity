@@ -13,7 +13,7 @@ namespace OpenApparatus.Unity.Tests.Editor
         [Test]
         public void Apply_NullTable_LeavesPlaceholdersUntouched()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<MultiRoomEnvironmentAsset>(FixturePath);
+            var asset = AssetDatabase.LoadAssetAtPath<ApparatusAsset>(FixturePath);
             asset.Substitution = null;
             GameObject root = null;
             try
@@ -31,7 +31,7 @@ namespace OpenApparatus.Unity.Tests.Editor
         [Test]
         public void Apply_MatchingEntry_ReplacesPlaceholderWithPrefab()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<MultiRoomEnvironmentAsset>(FixturePath);
+            var asset = AssetDatabase.LoadAssetAtPath<ApparatusAsset>(FixturePath);
 
             var prefabSource = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             prefabSource.name = "TestCupPrefab";
@@ -74,7 +74,7 @@ namespace OpenApparatus.Unity.Tests.Editor
         [Test]
         public void Apply_NullPrefabEntry_LeavesPlaceholder()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<MultiRoomEnvironmentAsset>(FixturePath);
+            var asset = AssetDatabase.LoadAssetAtPath<ApparatusAsset>(FixturePath);
             var table = ScriptableObject.CreateInstance<PrefabSubstitutionTable>();
             table.Entries = new[]
             {

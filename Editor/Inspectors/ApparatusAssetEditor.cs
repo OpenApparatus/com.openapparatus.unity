@@ -8,12 +8,12 @@ namespace OpenApparatus.Unity.Editor.Inspectors
     // be lost on reimport. Spawn options + Spawn button therefore live on
     // JsonEnvironmentImporterEditor (the top "Import Settings" section), not
     // here. This editor stays as a passive summary.
-    [CustomEditor(typeof(MultiRoomEnvironmentAsset))]
-    public sealed class MultiRoomEnvironmentAssetEditor : UnityEditor.Editor
+    [CustomEditor(typeof(ApparatusAsset))]
+    public sealed class ApparatusAssetEditor : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {
-            var asset = (MultiRoomEnvironmentAsset)target;
+            var asset = (ApparatusAsset)target;
 
             EditorGUILayout.LabelField("Schema version", asset.SchemaVersion.ToString());
             EditorGUILayout.LabelField("Rooms", (asset.Rooms?.Length ?? 0).ToString());

@@ -12,7 +12,7 @@ namespace OpenApparatus.Unity.Editor.Importers
 {
     /// <summary>
     /// Imports a Studio <c>.oapp</c> project file as a
-    /// <see cref="MultiRoomEnvironmentAsset"/>. Unlike <c>.oae</c>, an <c>.oapp</c>
+    /// <see cref="ApparatusAsset"/>. Unlike <c>.oae</c>, an <c>.oapp</c>
     /// carries the authored room grid rather than derived topology, so the
     /// importer rebuilds topology with <see cref="MultiRoomEnvironmentBuilder.FromGrid"/>
     /// and applies the project's passage overrides — yielding the same asset
@@ -55,7 +55,7 @@ namespace OpenApparatus.Unity.Editor.Importers
                 return;
             }
 
-            var asset = ScriptableObject.CreateInstance<MultiRoomEnvironmentAsset>();
+            var asset = ScriptableObject.CreateInstance<ApparatusAsset>();
             asset.name = Path.GetFileNameWithoutExtension(ctx.assetPath);
             asset.Parameters = MapParameters(doc);
             asset.ObjectSlots = MapSlots(doc.objectTypes);
@@ -169,7 +169,7 @@ namespace OpenApparatus.Unity.Editor.Importers
             return new Passage.Doorway(openings);
         }
 
-        static void AssignObjects(MultiRoomEnvironmentAsset asset, List<OappObjectInstance> objects)
+        static void AssignObjects(ApparatusAsset asset, List<OappObjectInstance> objects)
         {
             if (asset.Rooms == null) return;
 

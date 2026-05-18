@@ -25,7 +25,7 @@ namespace OpenApparatus.Unity.Tests.Editor
             int expectedFloorColliders,
             int expectedCeilingColliders)
         {
-            var asset = AssetDatabase.LoadAssetAtPath<MultiRoomEnvironmentAsset>(FixturePath);
+            var asset = AssetDatabase.LoadAssetAtPath<ApparatusAsset>(FixturePath);
             asset.ColliderMode = mode;
             GameObject root = null;
             try
@@ -57,7 +57,7 @@ namespace OpenApparatus.Unity.Tests.Editor
         [Test]
         public void Placeholder_KeepsColliderWhenObjectsFlagSet()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<MultiRoomEnvironmentAsset>(FixturePath);
+            var asset = AssetDatabase.LoadAssetAtPath<ApparatusAsset>(FixturePath);
             asset.ColliderMode = ColliderMode.Objects;
             GameObject root = null;
             try
@@ -78,7 +78,7 @@ namespace OpenApparatus.Unity.Tests.Editor
         [Test]
         public void Placeholder_DropsColliderWhenObjectsFlagOff()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<MultiRoomEnvironmentAsset>(FixturePath);
+            var asset = AssetDatabase.LoadAssetAtPath<ApparatusAsset>(FixturePath);
             asset.ColliderMode = ColliderMode.None;
             GameObject root = null;
             try
@@ -98,7 +98,7 @@ namespace OpenApparatus.Unity.Tests.Editor
         [Test]
         public void SubstitutedPrefab_ColliderIsPrefabAuthorsChoice()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<MultiRoomEnvironmentAsset>(FixturePath);
+            var asset = AssetDatabase.LoadAssetAtPath<ApparatusAsset>(FixturePath);
             asset.ColliderMode = ColliderMode.Objects;  // Should not influence prefabs.
 
             // Bare prefab with no collider — substitution should NOT add one.

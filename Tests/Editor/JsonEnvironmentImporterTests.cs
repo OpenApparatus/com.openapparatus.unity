@@ -33,10 +33,10 @@ namespace OpenApparatus.Unity.Tests.Editor
         }
 
         [Test]
-        public void Import_ProducesMultiRoomEnvironmentAsset()
+        public void Import_ProducesApparatusAsset()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<MultiRoomEnvironmentAsset>(FixturePath);
-            Assert.IsNotNull(asset, "single_room.oae should import as MultiRoomEnvironmentAsset.");
+            var asset = AssetDatabase.LoadAssetAtPath<ApparatusAsset>(FixturePath);
+            Assert.IsNotNull(asset, "single_room.oae should import as ApparatusAsset.");
             Assert.AreEqual(1, asset.Rooms.Length);
             Assert.AreEqual(4, asset.Rooms[0].Walls.Length);
             Assert.AreEqual(1, asset.Rooms[0].Objects.Length);
@@ -45,7 +45,7 @@ namespace OpenApparatus.Unity.Tests.Editor
         [Test]
         public void Import_RouteWallPositionsThroughOpenApparatusSpace()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<MultiRoomEnvironmentAsset>(FixturePath);
+            var asset = AssetDatabase.LoadAssetAtPath<ApparatusAsset>(FixturePath);
             var firstWall = asset.Rooms[0].Walls[0];
             // South wall in fixture: start [0,0] -> end [7,0] in Studio coords.
             // ToUnity negates X, so endLocal.x should be -7, startLocal.x should be 0.
@@ -56,7 +56,7 @@ namespace OpenApparatus.Unity.Tests.Editor
         [Test]
         public void Import_RecognisesDoorwayPassage()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<MultiRoomEnvironmentAsset>(FixturePath);
+            var asset = AssetDatabase.LoadAssetAtPath<ApparatusAsset>(FixturePath);
             var northWall = asset.Rooms[0].Walls[2];
             Assert.AreEqual(PassageKind.Doorway, northWall.PassageKind);
             Assert.AreEqual(1, northWall.Openings.Length);
@@ -66,7 +66,7 @@ namespace OpenApparatus.Unity.Tests.Editor
         [Test]
         public void Spawn_ProducesExpectedHierarchy()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<MultiRoomEnvironmentAsset>(FixturePath);
+            var asset = AssetDatabase.LoadAssetAtPath<ApparatusAsset>(FixturePath);
             GameObject root = null;
             try
             {

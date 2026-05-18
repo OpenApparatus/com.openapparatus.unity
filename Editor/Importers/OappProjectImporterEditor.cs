@@ -21,7 +21,7 @@ namespace OpenApparatus.Unity.Editor.Importers
         public override void OnInspectorGUI()
         {
             var importer = (OappProjectImporter)target;
-            var asset = AssetDatabase.LoadAssetAtPath<MultiRoomEnvironmentAsset>(importer.assetPath);
+            var asset = AssetDatabase.LoadAssetAtPath<ApparatusAsset>(importer.assetPath);
 
             DrawSummary(asset);
 
@@ -47,7 +47,7 @@ namespace OpenApparatus.Unity.Editor.Importers
             }
         }
 
-        static void DrawSummary(MultiRoomEnvironmentAsset asset)
+        static void DrawSummary(ApparatusAsset asset)
         {
             EditorGUILayout.LabelField("Summary", EditorStyles.boldLabel);
             if (asset == null)

@@ -12,7 +12,7 @@ namespace OpenApparatus.Unity.Tests.Editor
         [Test]
         public void EnvironmentRoot_GetRoom_ReturnsTheRoom()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<MultiRoomEnvironmentAsset>(FixturePath);
+            var asset = AssetDatabase.LoadAssetAtPath<ApparatusAsset>(FixturePath);
             GameObject root = null;
             try
             {
@@ -27,7 +27,7 @@ namespace OpenApparatus.Unity.Tests.Editor
         [Test]
         public void Room_CarriesItsWalls_AfterSpawn()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<MultiRoomEnvironmentAsset>(FixturePath);
+            var asset = AssetDatabase.LoadAssetAtPath<ApparatusAsset>(FixturePath);
             GameObject root = null;
             try
             {
@@ -42,7 +42,7 @@ namespace OpenApparatus.Unity.Tests.Editor
         [Test]
         public void Room_AddObjectToWall_ParentsInstanceToRoom()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<MultiRoomEnvironmentAsset>(FixturePath);
+            var asset = AssetDatabase.LoadAssetAtPath<ApparatusAsset>(FixturePath);
             var prefab = GameObject.CreatePrimitive(PrimitiveType.Cube);
             GameObject root = null;
             try
@@ -63,7 +63,7 @@ namespace OpenApparatus.Unity.Tests.Editor
         [Test]
         public void Spawn_SetsObjectTypeOnInstance()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<MultiRoomEnvironmentAsset>(FixturePath);
+            var asset = AssetDatabase.LoadAssetAtPath<ApparatusAsset>(FixturePath);
             GameObject root = null;
             try
             {
