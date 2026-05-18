@@ -46,7 +46,7 @@ namespace OpenApparatus.Unity.Editor.Internal
 
             if (roomData.Walls != null)
                 foreach (var wd in roomData.Walls)
-                    SpawnWall(roomGo.transform, wd, roomData.Id, p);
+                    SpawnWall(roomGo.transform, wd, roomData, p);
 
             if (roomData.Objects != null)
                 foreach (var od in roomData.Objects)
@@ -67,11 +67,12 @@ namespace OpenApparatus.Unity.Editor.Internal
                 MaterialResolver.Resolve($"OpenApparatus_Ceiling_{rd.Id}"));
         }
 
-        static void SpawnWall(Transform parent, WallData wd, int roomId, EnvironmentParameters p)
+        static void SpawnWall(Transform parent, WallData wd, RoomData room, EnvironmentParameters p)
         {
+            string meshName = $"OpenApparatus_Walls_{room.Id}_{wd.Number}";
             var go = CreateMeshChild(parent, $"Wall_{wd.Number}",
-                JsonGeometryBuilder.BuildWallMesh(wd, p, $"OpenApparatus_Walls_{roomId}_{wd.Number}"),
-                MaterialResolver.Resolve($"OpenApparatus_Walls_{roomId}_{wd.Number}"));
+                JsonGeometryBuilder.BuildWallMesh(wd, room, p, meshName),
+                MaterialResolver.Resolve(meshName));
 
             var w = go.AddComponent<Wall>();
             w.WallNumber = wd.Number;
