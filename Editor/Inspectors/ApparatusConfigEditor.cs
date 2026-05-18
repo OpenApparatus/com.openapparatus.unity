@@ -73,10 +73,18 @@ namespace OpenApparatus.Unity.Editor.Inspectors
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("Source"),
-                    new GUIContent("Source"));
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("GeneratedPrefab"),
-                    new GUIContent("Prefab"));
+                using (new EditorGUILayout.VerticalScope())
+                {
+                    EditorGUILayout.LabelField("Source Apparatus", EditorStyles.miniLabel);
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("Source"),
+                        GUIContent.none);
+                }
+                using (new EditorGUILayout.VerticalScope())
+                {
+                    EditorGUILayout.LabelField("Output Prefab", EditorStyles.miniLabel);
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("GeneratedPrefab"),
+                        GUIContent.none);
+                }
             }
             EditorGUILayout.Space(6);
 
