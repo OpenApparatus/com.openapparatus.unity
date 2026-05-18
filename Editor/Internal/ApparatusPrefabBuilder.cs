@@ -93,20 +93,31 @@ namespace OpenApparatus.Unity.Editor.Internal
             var seen = new HashSet<Object>();
 
             foreach (var filter in prefab.GetComponentsInChildren<MeshFilter>(true))
-            {
-                var mesh = filter.sharedMesh;
-                if (mesh != null && !AssetDatabase.Contains(mesh) && seen.Add(mesh))
-                    AssetDatabase.AddObjectToAsset(mesh, prefab);
-            }
+                Embed(filter.sharedMesh, prefab, seen);
             foreach (var renderer in prefab.GetComponentsInChildren<Renderer>(true))
-            {
                 foreach (var material in renderer.sharedMaterials)
-                    if (material != null && !AssetDatabase.Contains(material) && seen.Add(material))
-                        AssetDatabase.AddObjectToAsset(material, prefab);
-            }
+                    Embed(material, prefab, seen);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(prefab));
+        }
+
+        // Embeds a build-time object (empty asset path) as a sub-asset of the
+        // prefab. Skips built-in resources and already-saved assets — calling
+        // AddObjectToAsset on those throws, which would otherwise abort the
+        // whole pass and leave later objects (e.g. materials) unembedded.
+        static void Embed(Object obj, GameObject prefab, HashSet<Object> seen)
+        {
+            if (obj == null || !seen.Add(obj)) return;
+            if (!string.IsNullOrEmpty(AssetDatabase.GetAssetPath(obj))) return;
+            try
+            {
+                AssetDatabase.AddObjectToAsset(obj, prefab);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"[OpenApparatus] Could not embed '{obj.name}': {e.Message}");
+            }
         }
 
         // ---- Per-room configuration ----
