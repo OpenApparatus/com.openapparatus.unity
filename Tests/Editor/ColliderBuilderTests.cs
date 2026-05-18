@@ -65,7 +65,7 @@ namespace OpenApparatus.Unity.Tests.Editor
                 root = EnvironmentSpawner.Spawn(asset);
                 var placeholder = root.GetComponentInChildren<RoomObjectInstance>();
                 Assert.IsNotNull(placeholder);
-                Assert.IsNotNull(placeholder.GetComponent<Collider>(),
+                Assert.IsNotNull(placeholder.GetComponentInChildren<Collider>(),
                     "Placeholder should keep its default primitive collider when Objects flag is on.");
             }
             finally
@@ -86,7 +86,7 @@ namespace OpenApparatus.Unity.Tests.Editor
                 root = EnvironmentSpawner.Spawn(asset);
                 var placeholder = root.GetComponentInChildren<RoomObjectInstance>();
                 Assert.IsNotNull(placeholder);
-                Assert.IsNull(placeholder.GetComponent<Collider>(),
+                Assert.IsNull(placeholder.GetComponentInChildren<Collider>(),
                     "Placeholder should have its primitive collider removed when Objects flag is off.");
             }
             finally

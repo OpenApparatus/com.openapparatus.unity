@@ -57,29 +57,33 @@ namespace OpenApparatus.Unity.Editor.Internal
                                 MultiRoomEnvironmentAsset asset)
         {
             var slot = ResolveSlot(asset.ObjectSlots, od.Slot);
-            var primitive = ChoosePrimitive(slot?.Shape);
-            var go = GameObject.CreatePrimitive(primitive);
-            go.name = $"Object_Slot{od.Slot}";
-            go.transform.SetParent(parent, worldPositionStays: false);
-            go.transform.localPosition = od.LocalPosition;
-            go.transform.localRotation = Quaternion.Euler(0f, od.LocalRotationY * Mathf.Rad2Deg, 0f);
-            if (slot != null && slot.Size > 0f)
-                go.transform.localScale = Vector3.one * slot.Size;
 
-            // CreatePrimitive auto-attaches a Collider matching the shape.
-            // The Objects flag in ColliderMode controls whether placeholders
-            // keep that collider. Substituted prefabs are unaffected — their
-            // collider is whatever the prefab author shipped.
-            if ((asset.ColliderMode & ColliderMode.Objects) == 0)
-            {
-                foreach (var c in go.GetComponents<Collider>())
-                    Object.DestroyImmediate(c);
-            }
+            // The slot is a clean logical node: identity + placement only. Its
+            // visual lives on a separate "StandIn" child so prefab substitution
+            // can swap the visual without disturbing the slot's identity.
+            var slotGo = new GameObject($"Object_Slot{od.Slot}");
+            slotGo.transform.SetParent(parent, worldPositionStays: false);
+            slotGo.transform.localPosition = od.LocalPosition;
+            slotGo.transform.localRotation = Quaternion.Euler(0f, od.LocalRotationY * Mathf.Rad2Deg, 0f);
 
-            var instance = go.AddComponent<RoomObjectInstance>();
+            var instance = slotGo.AddComponent<RoomObjectInstance>();
             instance.Slot = od.Slot;
             instance.OwningRoomId = owningRoomId;
             instance.LocalRotationY = od.LocalRotationY;
+
+            var standIn = GameObject.CreatePrimitive(ChoosePrimitive(slot?.Shape));
+            standIn.name = "StandIn";
+            standIn.transform.SetParent(slotGo.transform, worldPositionStays: false);
+            if (slot != null && slot.Size > 0f)
+                standIn.transform.localScale = Vector3.one * slot.Size;
+
+            // CreatePrimitive auto-attaches a Collider. The Objects flag controls
+            // whether the stand-in keeps it; substituted prefabs are untouched.
+            if ((asset.ColliderMode & ColliderMode.Objects) == 0)
+            {
+                foreach (var c in standIn.GetComponents<Collider>())
+                    Object.DestroyImmediate(c);
+            }
         }
 
         static ObjectSlotDefinition ResolveSlot(ObjectSlotDefinition[] slots, int slotNumber)

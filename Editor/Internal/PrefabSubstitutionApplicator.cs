@@ -40,22 +40,16 @@ namespace OpenApparatus.Unity.Editor.Internal
                     continue;
                 }
 
-                SwapPlaceholder(instance, entry);
+                SwapStandIn(instance, entry);
             }
         }
 
-        static void SwapPlaceholder(RoomObjectInstance placeholder, SubstitutionEntry entry)
+        // Replaces the slot's "StandIn" visual child with the entry's prefab.
+        // The slot node itself -- transform, RoomObjectInstance identity -- is
+        // left intact; only the visual is swapped.
+        static void SwapStandIn(RoomObjectInstance slot, SubstitutionEntry entry)
         {
-            var parent = placeholder.transform.parent;
-            var basePos = placeholder.transform.localPosition;
-            var baseRot = placeholder.transform.localRotation;
-
-            // Capture the placeholder's slot metadata so we can carry it onto
-            // the substituted instance. Downstream tools (ColliderBuilder,
-            // researcher code) identify research objects via RoomObjectInstance.
-            int slot         = placeholder.Slot;
-            int owningRoomId = placeholder.OwningRoomId;
-            float rotationY  = placeholder.LocalRotationY;
+            var standIn = slot.transform.Find("StandIn");
 
             GameObject instance = null;
             if (PrefabUtility.IsPartOfPrefabAsset(entry.Prefab))
@@ -65,10 +59,9 @@ namespace OpenApparatus.Unity.Editor.Internal
             if (instance == null) return;
             instance.name = entry.Prefab.name;
 
-            instance.transform.SetParent(parent, worldPositionStays: false);
-            instance.transform.localPosition = basePos + entry.PositionOffset;
-            instance.transform.localRotation =
-                baseRot * Quaternion.Euler(0f, entry.RotationOffsetYDegrees, 0f);
+            instance.transform.SetParent(slot.transform, worldPositionStays: false);
+            instance.transform.localPosition = entry.PositionOffset;
+            instance.transform.localRotation = Quaternion.Euler(0f, entry.RotationOffsetYDegrees, 0f);
 
             var scale = entry.ScaleMultiplier;
             if (scale == Vector3.zero) scale = Vector3.one;
@@ -78,15 +71,7 @@ namespace OpenApparatus.Unity.Editor.Internal
                 prefabScale.y * scale.y,
                 prefabScale.z * scale.z);
 
-            // Marker survives the swap. The scene instance is mutable; the
-            // source prefab asset is untouched.
-            var marker = instance.GetComponent<RoomObjectInstance>()
-                         ?? instance.AddComponent<RoomObjectInstance>();
-            marker.Slot          = slot;
-            marker.OwningRoomId  = owningRoomId;
-            marker.LocalRotationY = rotationY;
-
-            Object.DestroyImmediate(placeholder.gameObject);
+            if (standIn != null) Object.DestroyImmediate(standIn.gameObject);
         }
     }
 }
