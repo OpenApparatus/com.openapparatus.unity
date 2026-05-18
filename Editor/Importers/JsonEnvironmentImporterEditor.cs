@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEditor.AssetImporters;
 using UnityEngine;
-using OpenApparatus.Unity.Editor.Internal;
+using OpenApparatus.Unity.Editor.Inspectors;
 
 namespace OpenApparatus.Unity.Editor.Importers
 {
@@ -34,8 +34,9 @@ namespace OpenApparatus.Unity.Editor.Importers
             serializedObject.ApplyModifiedProperties();
 
             EditorGUILayout.HelpBox(
-                "Changing collider mode or substitution applies on reimport (Apply below) " +
-                "and on the next Spawn into scene.",
+                "Collider mode and substitution apply on reimport (Apply below). " +
+                "Create Apparatus is the recommended way to build a configurable, " +
+                "re-skinnable apparatus.",
                 MessageType.Info);
 
             EditorGUILayout.Space();
@@ -44,11 +45,8 @@ namespace OpenApparatus.Unity.Editor.Importers
             EditorGUILayout.Space();
             using (new EditorGUI.DisabledScope(asset == null))
             {
-                if (GUILayout.Button("Spawn into scene", GUILayout.Height(28)))
-                {
-                    var root = EnvironmentSpawner.Spawn(asset);
-                    if (root != null) Selection.activeGameObject = root;
-                }
+                if (GUILayout.Button("Create Apparatus", GUILayout.Height(28)))
+                    ApparatusWizard.CreateFor(importer.assetPath, asset);
             }
         }
 
