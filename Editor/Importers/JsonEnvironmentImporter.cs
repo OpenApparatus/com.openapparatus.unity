@@ -11,7 +11,7 @@ using OpenApparatus.Unity.Internal;
 
 namespace OpenApparatus.Unity.Editor.Importers
 {
-    [ScriptedImporter(version: 1, ext: "oae")]
+    [ScriptedImporter(version: 2, ext: "oae")]
     public sealed class JsonEnvironmentImporter : ScriptedImporter
     {
         // Spawn-time settings persisted on the importer so they survive reimport.
@@ -52,6 +52,9 @@ namespace OpenApparatus.Unity.Editor.Importers
             asset.ObjectSlots = MapSlots(doc.objectSlots);
             asset.Rooms = MapRooms(doc.rooms);
             asset.OutsideObjects = MapOutside(doc.outside);
+            asset.GridWidth = doc.grid?.width ?? 0;
+            asset.GridLength = doc.grid?.length ?? 0;
+            asset.RoomGrid = FlattenGrid(doc.grid);
             asset.ColliderMode = ColliderMode;
             asset.Substitution = Substitution;
 
@@ -223,6 +226,25 @@ namespace OpenApparatus.Unity.Editor.Importers
         static ObjectInstanceData[] MapOutside(JsonOutside outside)
         {
             return outside == null ? Array.Empty<ObjectInstanceData>() : MapObjects(outside.objects);
+        }
+
+        // tiles is [x][z]; flatten row-major. Empty tiles default to -1 so
+        // room id 0 stays distinct from "no room here".
+        static int[] FlattenGrid(JsonGrid grid)
+        {
+            if (grid?.tiles == null || grid.width <= 0 || grid.length <= 0)
+                return Array.Empty<int>();
+
+            var flat = new int[grid.width * grid.length];
+            for (int i = 0; i < flat.Length; i++) flat[i] = -1;
+            for (int x = 0; x < grid.width && x < grid.tiles.Count; x++)
+            {
+                var col = grid.tiles[x];
+                if (col == null) continue;
+                for (int z = 0; z < grid.length && z < col.Count; z++)
+                    flat[x * grid.length + z] = col[z];
+            }
+            return flat;
         }
     }
 }

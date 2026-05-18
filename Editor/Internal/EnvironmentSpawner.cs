@@ -9,13 +9,18 @@ namespace OpenApparatus.Unity.Editor.Internal
         {
             if (asset == null) return null;
 
-            var root = new GameObject(asset.name);
-            var rootComponent = root.AddComponent<EnvironmentRoot>();
-            rootComponent.Asset = asset;
+            // Geometry: rebuild the Core topology from the stored grid and
+            // build it through the same Core builders Studio's glTF export
+            // uses, so an imported environment matches a Studio .glb.
+            var plan = EnvironmentTopology.Rebuild(asset);
+            var grid = EnvironmentTopology.ToGrid(asset);
+            var root = EnvironmentModelBuilder.Build(asset.name, plan, grid,
+                                                     asset.Parameters, new EnvironmentBuildOptions());
 
-            if (asset.Rooms != null)
-                foreach (var roomData in asset.Rooms)
-                    SpawnRoom(root.transform, roomData, asset);
+            var rootComponent = root.GetComponent<EnvironmentRoot>();
+            if (rootComponent != null) rootComponent.Asset = asset;
+
+            SpawnObjects(root.transform, asset);
 
             PrefabSubstitutionApplicator.Apply(root, asset.Substitution, asset.ObjectSlots);
             ColliderBuilder.Apply(root, asset.ColliderMode, asset.Parameters);
@@ -24,75 +29,27 @@ namespace OpenApparatus.Unity.Editor.Internal
             return root;
         }
 
-        static void SpawnRoom(Transform parent, RoomData roomData, MultiRoomEnvironmentAsset asset)
+        static void SpawnObjects(Transform root, MultiRoomEnvironmentAsset asset)
         {
-            var roomGo = new GameObject($"Room_{roomData.Id}");
-            roomGo.transform.SetParent(parent, worldPositionStays: false);
+            if (asset.Rooms != null)
+            {
+                foreach (var rd in asset.Rooms)
+                {
+                    if (rd?.Objects == null || rd.Objects.Length == 0) continue;
+                    var roomGo = root.Find($"Room_{rd.Id}");
+                    var parent = roomGo != null ? roomGo : root;
+                    foreach (var od in rd.Objects)
+                        SpawnObject(parent, od, rd.Id, asset);
+                }
+            }
 
-            var p = asset.Parameters;
-            roomGo.transform.localPosition = new Vector3(
-                -roomData.GridPositionStudio.x * p.TileSize,
-                0f,
-                roomData.GridPositionStudio.y * p.TileSize);
-
-            var roomComponent = roomGo.AddComponent<Room>();
-            roomComponent.RoomId = roomData.Id;
-            roomComponent.RoomType = roomData.RoomType;
-            roomComponent.GridPositionStudio = roomData.GridPositionStudio;
-            roomComponent.TileIndices = roomData.TileIndices;
-
-            SpawnFloor(roomGo.transform, roomData, p);
-            SpawnCeiling(roomGo.transform, roomData, p);
-
-            if (roomData.Walls != null)
-                foreach (var wd in roomData.Walls)
-                    SpawnWall(roomGo.transform, wd, roomData, p);
-
-            if (roomData.Objects != null)
-                foreach (var od in roomData.Objects)
-                    SpawnObject(roomGo.transform, od, roomData.Id, asset);
-        }
-
-        static void SpawnFloor(Transform parent, RoomData rd, EnvironmentParameters p)
-        {
-            var go = CreateMeshChild(parent, "Floor",
-                JsonGeometryBuilder.BuildFloorMesh(rd, p, $"OpenApparatus_Floor_{rd.Id}"),
-                MaterialResolver.Resolve($"OpenApparatus_Floor_{rd.Id}"));
-        }
-
-        static void SpawnCeiling(Transform parent, RoomData rd, EnvironmentParameters p)
-        {
-            var go = CreateMeshChild(parent, "Ceiling",
-                JsonGeometryBuilder.BuildCeilingMesh(rd, p, $"OpenApparatus_Ceiling_{rd.Id}"),
-                MaterialResolver.Resolve($"OpenApparatus_Ceiling_{rd.Id}"));
-        }
-
-        static void SpawnWall(Transform parent, WallData wd, RoomData room, EnvironmentParameters p)
-        {
-            string meshName = $"OpenApparatus_Walls_{room.Id}_{wd.Number}";
-            var go = CreateMeshChild(parent, $"Wall_{wd.Number}",
-                JsonGeometryBuilder.BuildWallMesh(wd, room, p, meshName),
-                MaterialResolver.Resolve(meshName));
-
-            var w = go.AddComponent<Wall>();
-            w.WallNumber = wd.Number;
-            w.StartLocal = wd.StartLocal;
-            w.EndLocal = wd.EndLocal;
-            w.NeighbourRoomId = wd.NeighbourRoomId;
-            w.PassageKind = wd.PassageKind;
-            w.Openings = wd.Openings;
-        }
-
-        static GameObject CreateMeshChild(Transform parent, string name, Mesh mesh, Material material)
-        {
-            var go = new GameObject(name);
-            go.transform.SetParent(parent, worldPositionStays: false);
-            var mf = go.AddComponent<MeshFilter>();
-            mf.sharedMesh = mesh;
-            var mr = go.AddComponent<MeshRenderer>();
-            mr.sharedMaterial = material;
-            mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
-            return go;
+            if (asset.OutsideObjects != null && asset.OutsideObjects.Length > 0)
+            {
+                var outside = new GameObject("Outside");
+                outside.transform.SetParent(root, worldPositionStays: false);
+                foreach (var od in asset.OutsideObjects)
+                    SpawnObject(outside.transform, od, -1, asset);
+            }
         }
 
         static void SpawnObject(Transform parent, ObjectInstanceData od, int owningRoomId,

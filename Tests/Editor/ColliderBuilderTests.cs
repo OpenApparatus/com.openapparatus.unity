@@ -9,19 +9,17 @@ namespace OpenApparatus.Unity.Tests.Editor
     {
         const string FixturePath = "Packages/com.openapparatus.unity/Tests/Fixtures/single_room.oae";
 
-        // Object collider count is tracked separately because primitive
-        // placeholders already carry their own collider from CreatePrimitive
-        // (one per RoomObjectInstance, regardless of mode); only the Objects
-        // flag *additionally* ensures substituted prefabs without colliders
-        // get one. The fixture has no substitution, so toggling Objects does
-        // not change the unprimitive-collider count.
-        [TestCase(ColliderMode.None,                                   0, 0, 0)]
-        [TestCase(ColliderMode.Walls,                                  4, 0, 0)]
-        [TestCase(ColliderMode.Floors,                                 0, 4, 0)]
-        [TestCase(ColliderMode.Ceilings,                               0, 0, 4)]
-        [TestCase(ColliderMode.Walls | ColliderMode.Floors,            4, 4, 0)]
-        [TestCase(ColliderMode.All,                                    4, 4, 4)]
-        public void Apply_ProducesExpectedColliderCounts(
+        // Each selected part (Floor / Walls / Ceiling) gets one MeshCollider;
+        // the single-room fixture therefore yields one collider per flag.
+        // Object placeholder colliders are not MeshColliders and are named
+        // Object_*, so they never count here.
+        [TestCase(ColliderMode.None,                        0, 0, 0)]
+        [TestCase(ColliderMode.Walls,                       1, 0, 0)]
+        [TestCase(ColliderMode.Floors,                      0, 1, 0)]
+        [TestCase(ColliderMode.Ceilings,                    0, 0, 1)]
+        [TestCase(ColliderMode.Walls | ColliderMode.Floors, 1, 1, 0)]
+        [TestCase(ColliderMode.All,                         1, 1, 1)]
+        public void Apply_AddsMeshCollidersToSelectedParts(
             ColliderMode mode,
             int expectedWallColliders,
             int expectedFloorColliders,
@@ -36,20 +34,18 @@ namespace OpenApparatus.Unity.Tests.Editor
                 int wallColliders = 0;
                 int floorColliders = 0;
                 int ceilingColliders = 0;
-                foreach (var col in root.GetComponentsInChildren<BoxCollider>(includeInactive: true))
+                foreach (var col in root.GetComponentsInChildren<MeshCollider>(includeInactive: true))
                 {
-                    var name = col.gameObject.name;
-                    if      (name == "WallCollider")    wallColliders++;
-                    else if (name == "FloorCollider")   floorColliders++;
-                    else if (name == "CeilingCollider") ceilingColliders++;
-                    // Object placeholders keep their CreatePrimitive collider
-                    // when the Objects flag is set; not a surface collider.
-                    else if (col.GetComponent<RoomObjectInstance>() != null) continue;
-                    else Assert.Fail($"Unexpected BoxCollider parent: {name}");
+                    switch (col.gameObject.name)
+                    {
+                        case "Walls":   wallColliders++;    break;
+                        case "Floor":   floorColliders++;   break;
+                        case "Ceiling": ceilingColliders++; break;
+                    }
                 }
                 Assert.AreEqual(expectedWallColliders, wallColliders, "wall collider count");
-                Assert.AreEqual(expectedFloorColliders, floorColliders, "floor tile collider count");
-                Assert.AreEqual(expectedCeilingColliders, ceilingColliders, "ceiling tile collider count");
+                Assert.AreEqual(expectedFloorColliders, floorColliders, "floor collider count");
+                Assert.AreEqual(expectedCeilingColliders, ceilingColliders, "ceiling collider count");
             }
             finally
             {

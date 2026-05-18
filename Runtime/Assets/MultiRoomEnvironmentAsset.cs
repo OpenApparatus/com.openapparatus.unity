@@ -19,6 +19,13 @@ namespace OpenApparatus.Unity
         public ObjectSlotDefinition[] ObjectSlots;
         public ObjectInstanceData[] OutsideObjects;
 
+        // Tile -> room-id ownership grid, row-major: RoomGrid[x * GridLength + z].
+        // -1 marks an empty tile. The geometry pipeline rebuilds the Core
+        // MultiRoomEnvironment from this grid (see EnvironmentTopology).
+        public int[] RoomGrid;
+        public int GridWidth;
+        public int GridLength;
+
         [SerializeField] private List<RoomMeshEntry> _roomMeshes = new List<RoomMeshEntry>();
 
         public ColliderMode ColliderMode = ColliderMode.None;

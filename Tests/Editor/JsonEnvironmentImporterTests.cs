@@ -74,7 +74,11 @@ namespace OpenApparatus.Unity.Tests.Editor
                 Assert.IsNotNull(root);
                 Assert.IsNotNull(root.GetComponent<EnvironmentRoot>());
                 Assert.AreEqual(1, root.GetComponentsInChildren<Room>().Length);
-                Assert.AreEqual(4, root.GetComponentsInChildren<Wall>().Length);
+
+                var room = root.GetComponentInChildren<Room>().transform;
+                Assert.IsNotNull(room.Find("Floor"), "room should have a Floor part");
+                Assert.IsNotNull(room.Find("Walls"), "room should have a Walls part");
+                Assert.IsNotNull(room.Find("Ceiling"), "room should have a Ceiling part");
                 Assert.AreEqual(1, root.GetComponentsInChildren<RoomObjectInstance>().Length);
             }
             finally
