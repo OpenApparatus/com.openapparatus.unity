@@ -1,0 +1,250 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using Newtonsoft.Json;
+using UnityEditor;
+using UnityEditor.AssetImporters;
+using UnityEngine;
+using OpenApparatus.Topology;
+using OpenApparatus.Unity.Editor.Internal;
+using OpenApparatus.Unity.Internal;
+
+namespace OpenApparatus.Unity.Editor.Importers
+{
+    [ScriptedImporter(version: 2, ext: "oae")]
+    public sealed class OApparatusOaeImporter : ScriptedImporter
+    {
+        // Spawn-time settings persisted on the importer so they survive reimport.
+        // Editable via OApparatusOaeImporterEditor (top "Import Settings" section).
+        public OApparatusColliderMode OApparatusColliderMode = OApparatusColliderMode.None;
+        public OApparatusSubstitutionTable Substitution;
+
+        public override void OnImportAsset(AssetImportContext ctx)
+        {
+            string text;
+            try
+            {
+                text = File.ReadAllText(ctx.assetPath);
+            }
+            catch (Exception)
+            {
+                return;
+            }
+
+            if (!OApparatusOaeDiscriminator.IsOpenApparatus(text)) return;
+
+            OApparatusOaeDocument doc;
+            try
+            {
+                doc = JsonConvert.DeserializeObject<OApparatusOaeDocument>(text);
+            }
+            catch (JsonException e)
+            {
+                ctx.LogImportError($"OpenApparatus JSON parse failed: {e.Message}");
+                return;
+            }
+            if (doc == null) return;
+
+            var asset = ScriptableObject.CreateInstance<OApparatusAsset>();
+            asset.name = Path.GetFileNameWithoutExtension(ctx.assetPath);
+            asset.SchemaVersion = doc.version;
+            asset.Parameters = MapParameters(doc.parameters);
+            asset.ObjectSlots = MapSlots(doc.objectSlots);
+            asset.Rooms = MapRooms(doc.rooms);
+            asset.OutsideObjects = MapOutside(doc.outside);
+            asset.GridWidth = doc.grid?.width ?? 0;
+            asset.GridLength = doc.grid?.length ?? 0;
+            asset.RoomGrid = FlattenGrid(doc.grid);
+            asset.OApparatusColliderMode = OApparatusColliderMode;
+            asset.Substitution = Substitution;
+
+            ctx.AddObjectToAsset("environment", asset);
+            ctx.SetMainObject(asset);
+        }
+
+        static OApparatusParameters MapParameters(OApparatusOaeParameters p)
+        {
+            if (p == null) return new OApparatusParameters();
+            return new OApparatusParameters
+            {
+                TileSize = p.tileSize,
+                WallThickness = p.wallThickness,
+                WallHeight = p.wallHeight,
+                DoorWidth = p.doorWidth,
+                DoorHeight = p.doorHeight,
+                WindowWidth = p.windowWidth,
+                WindowHeight = p.windowHeight,
+                WindowSillHeight = p.windowSillHeight,
+                GridSubdivision = p.gridSubdivision,
+                DefaultObjectY = p.defaultObjectY,
+            };
+        }
+
+        static OApparatusObjectSlot[] MapSlots(List<OApparatusOaeObjectSlot> slots)
+        {
+            if (slots == null) return Array.Empty<OApparatusObjectSlot>();
+            var result = new OApparatusObjectSlot[slots.Count];
+            for (int i = 0; i < slots.Count; i++)
+            {
+                var s = slots[i];
+                result[i] = new OApparatusObjectSlot
+                {
+                    Id = s.id,
+                    Shape = s.shape,
+                    Color = s.color != null && s.color.Count >= 3
+                        ? new Color(s.color[0], s.color[1], s.color[2])
+                        : Color.white,
+                    Size = s.size,
+                    DisplayName = s.displayName,
+                    ObjectType = !string.IsNullOrEmpty(s.objectType) ? s.objectType : s.displayName,
+                };
+            }
+            return result;
+        }
+
+        static OApparatusRoomInfo[] MapRooms(List<OApparatusOaeRoom> rooms)
+        {
+            if (rooms == null) return Array.Empty<OApparatusRoomInfo>();
+            var result = new OApparatusRoomInfo[rooms.Count];
+            for (int i = 0; i < rooms.Count; i++)
+            {
+                var r = rooms[i];
+                result[i] = new OApparatusRoomInfo
+                {
+                    Id = r.id,
+                    RoomType = ParseRoomType(r.shape),
+                    GridPositionStudio = r.position != null && r.position.Count >= 2
+                        ? new Vector2(r.position[0], r.position[1])
+                        : Vector2.zero,
+                    TileIndices = MapTiles(r.tiles),
+                    Walls = MapWalls(r.walls),
+                    Objects = MapObjects(r.objects),
+                };
+            }
+            return result;
+        }
+
+        static RoomType ParseRoomType(OApparatusOaeRoomShape shape)
+        {
+            if (shape == null) return RoomType.Square;
+            if (string.Equals(shape.type, "rectangle", StringComparison.OrdinalIgnoreCase) &&
+                !Mathf.Approximately(shape.width, shape.depth))
+            {
+                return RoomType.Rectangle;
+            }
+            return RoomType.Square;
+        }
+
+        static Vector2Int[] MapTiles(List<List<int>> tiles)
+        {
+            if (tiles == null) return Array.Empty<Vector2Int>();
+            var result = new Vector2Int[tiles.Count];
+            for (int i = 0; i < tiles.Count; i++)
+            {
+                var pair = tiles[i];
+                result[i] = pair != null && pair.Count >= 2
+                    ? new Vector2Int(pair[0], pair[1])
+                    : Vector2Int.zero;
+            }
+            return result;
+        }
+
+        static OApparatusWallInfo[] MapWalls(List<OApparatusOaeWall> walls)
+        {
+            if (walls == null) return Array.Empty<OApparatusWallInfo>();
+            var result = new OApparatusWallInfo[walls.Count];
+            for (int i = 0; i < walls.Count; i++)
+            {
+                var w = walls[i];
+                var startStudio = w.start != null && w.start.Count >= 2
+                    ? new Vector3(w.start[0], 0, w.start[1])
+                    : Vector3.zero;
+                var endStudio = w.end != null && w.end.Count >= 2
+                    ? new Vector3(w.end[0], 0, w.end[1])
+                    : Vector3.zero;
+
+                result[i] = new OApparatusWallInfo
+                {
+                    Number = w.number,
+                    StartLocal = OApparatusSpace.ToUnity(startStudio),
+                    EndLocal = OApparatusSpace.ToUnity(endStudio),
+                    NeighbourRoomId = w.neighborRoomId ?? -1,
+                    OApparatusPassageKind = ParsePassageKind(w.passage?.type),
+                    Openings = MapOpenings(w.passage?.openings),
+                };
+            }
+            return result;
+        }
+
+        static OApparatusPassageKind ParsePassageKind(string type)
+        {
+            if (string.Equals(type, "doorway", StringComparison.OrdinalIgnoreCase))
+                return OApparatusPassageKind.Doorway;
+            if (string.Equals(type, "open", StringComparison.OrdinalIgnoreCase))
+                return OApparatusPassageKind.Open;
+            return OApparatusPassageKind.Closed;
+        }
+
+        static OApparatusOpeningInfo[] MapOpenings(List<OApparatusOaeOpening> openings)
+        {
+            if (openings == null) return Array.Empty<OApparatusOpeningInfo>();
+            var result = new OApparatusOpeningInfo[openings.Count];
+            for (int i = 0; i < openings.Count; i++)
+            {
+                var o = openings[i];
+                result[i] = new OApparatusOpeningInfo
+                {
+                    OffsetAlongEdge = o.offsetAlongEdge,
+                    Width = o.width,
+                    Height = o.height,
+                    SillHeight = o.sillHeight,
+                };
+            }
+            return result;
+        }
+
+        static OApparatusObjectInfo[] MapObjects(List<OApparatusOaeObjectInstance> objs)
+        {
+            if (objs == null) return Array.Empty<OApparatusObjectInfo>();
+            var result = new OApparatusObjectInfo[objs.Count];
+            for (int i = 0; i < objs.Count; i++)
+            {
+                var o = objs[i];
+                var studioPos = o.position != null && o.position.Count >= 3
+                    ? new Vector3(o.position[0], o.position[1], o.position[2])
+                    : Vector3.zero;
+                result[i] = new OApparatusObjectInfo
+                {
+                    Slot = o.slot,
+                    LocalPosition = OApparatusSpace.ToUnity(studioPos),
+                    LocalRotationY = OApparatusSpace.YawToUnity(o.rotation),
+                };
+            }
+            return result;
+        }
+
+        static OApparatusObjectInfo[] MapOutside(OApparatusOaeOutside outside)
+        {
+            return outside == null ? Array.Empty<OApparatusObjectInfo>() : MapObjects(outside.objects);
+        }
+
+        // tiles is [x][z]; flatten row-major. Empty tiles default to -1 so
+        // room id 0 stays distinct from "no room here".
+        static int[] FlattenGrid(OApparatusOaeGrid grid)
+        {
+            if (grid?.tiles == null || grid.width <= 0 || grid.length <= 0)
+                return Array.Empty<int>();
+
+            var flat = new int[grid.width * grid.length];
+            for (int i = 0; i < flat.Length; i++) flat[i] = -1;
+            for (int x = 0; x < grid.width && x < grid.tiles.Count; x++)
+            {
+                var col = grid.tiles[x];
+                if (col == null) continue;
+                for (int z = 0; z < grid.length && z < col.Count; z++)
+                    flat[x * grid.length + z] = col[z];
+            }
+            return flat;
+        }
+    }
+}
