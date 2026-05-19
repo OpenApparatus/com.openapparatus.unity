@@ -58,7 +58,7 @@ namespace OpenApparatus.Unity.Tests.Editor
         {
             var asset = AssetDatabase.LoadAssetAtPath<OApparatusAsset>(FixturePath);
             var northWall = asset.Rooms[0].Walls[2];
-            Assert.AreEqual(OApparatusPassageKind.Doorway, northWall.OApparatusPassageKind);
+            Assert.AreEqual(OApparatusPassageKind.Doorway, northWall.PassageKind);
             Assert.AreEqual(1, northWall.Openings.Length);
             Assert.AreEqual(1.2f, northWall.Openings[0].Width, 1e-4f);
         }

@@ -129,20 +129,33 @@ namespace OpenApparatus.Unity.Editor.Internal
             go.transform.SetParent(parent, worldPositionStays: false);
             go.AddComponent<MeshFilter>().sharedMesh = mesh;
             var mr = go.AddComponent<MeshRenderer>();
-            mr.sharedMaterial = OApparatusMaterialResolver.Resolve(materialName, opts.OApparatusMaterialOverrides);
+            mr.sharedMaterial = OApparatusMaterialResolver.Resolve(materialName, opts.MaterialOverrides);
             mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
+
+            // The combined Walls part carries the room's per-wall data; the
+            // spawner fills it once the imported room info is available.
+            if (name == "Walls")
+                go.AddComponent<OApparatusWallsManager>();
         }
 
+        // Seeds the room component with the topology-derived info. Walls and
+        // objects are filled later by OApparatusSpawner.ConfigureRooms from the
+        // imported asset; this keeps a standalone Build() result valid too.
         static void AddRoomComponent(GameObject roomGo, CoreRoom room,
                                      Dictionary<int, List<Vector2Int>> tilesByRoom)
         {
             var component = roomGo.AddComponent<OApparatusRoomManager>();
-            component.RoomId = room.Id;
-            component.RoomType = room.RoomType;
-            component.GridPositionStudio = new Vector2(room.Position.X, room.Position.Y);
-            component.TileIndices = tilesByRoom.TryGetValue(room.Id, out var tiles)
-                ? tiles.ToArray()
-                : System.Array.Empty<Vector2Int>();
+            component.Info = new OApparatusRoomInfo
+            {
+                Id = room.Id,
+                RoomType = room.RoomType,
+                GridPositionStudio = new Vector2(room.Position.X, room.Position.Y),
+                TileIndices = tilesByRoom.TryGetValue(room.Id, out var tiles)
+                    ? tiles.ToArray()
+                    : System.Array.Empty<Vector2Int>(),
+                Walls = System.Array.Empty<OApparatusWallInfo>(),
+                Objects = System.Array.Empty<OApparatusObjectInfo>(),
+            };
         }
 
         static Dictionary<int, List<Vector2Int>> TilesByRoom(int[,] grid)

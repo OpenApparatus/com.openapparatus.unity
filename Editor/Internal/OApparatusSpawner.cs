@@ -28,7 +28,7 @@ namespace OpenApparatus.Unity.Editor.Internal
             ConfigureRooms(root.transform, asset);
 
             OApparatusSubstitutionApplicator.Apply(root, asset.Substitution, asset.ObjectSlots);
-            OApparatusColliderBuilder.Apply(root, asset.OApparatusColliderMode, asset.Parameters);
+            OApparatusColliderBuilder.Apply(root, asset.ColliderMode, asset.Parameters);
 
             Undo.RegisterCreatedObjectUndo(root, "Spawn OpenApparatus environment");
             return root;
@@ -70,13 +70,23 @@ namespace OpenApparatus.Unity.Editor.Internal
             slotGo.transform.localPosition = od.LocalPosition;
             slotGo.transform.localRotation = Quaternion.Euler(0f, od.LocalRotationY * Mathf.Rad2Deg, 0f);
 
+            // The component gets its own info copy: the owning room and object
+            // type are resolved here, leaving the asset's imported record clean.
             var instance = slotGo.AddComponent<OApparatusObjectManager>();
-            instance.Slot = od.Slot;
-            instance.OwningRoomId = owningRoomId;
-            instance.LocalRotationY = od.LocalRotationY;
-            instance.ObjectType = slot != null
-                ? (!string.IsNullOrEmpty(slot.ObjectType) ? slot.ObjectType : slot.DisplayName)
-                : null;
+            instance.Info = new OApparatusObjectInfo
+            {
+                Slot = od.Slot,
+                LocalPosition = od.LocalPosition,
+                LocalRotationY = od.LocalRotationY,
+                GlobalId = od.GlobalId,
+                TypeId = od.TypeId,
+                CustomId = od.CustomId,
+                Name = od.Name,
+                OwningRoomId = owningRoomId,
+                ObjectType = slot != null
+                    ? (!string.IsNullOrEmpty(slot.ObjectType) ? slot.ObjectType : slot.DisplayName)
+                    : null,
+            };
 
             var standIn = GameObject.CreatePrimitive(ChoosePrimitive(slot?.Shape));
             standIn.name = "StandIn";
@@ -86,7 +96,7 @@ namespace OpenApparatus.Unity.Editor.Internal
 
             // CreatePrimitive auto-attaches a Collider. The Objects flag controls
             // whether the stand-in keeps it; substituted prefabs are untouched.
-            if ((asset.OApparatusColliderMode & OApparatusColliderMode.Objects) == 0)
+            if ((asset.ColliderMode & OApparatusColliderMode.Objects) == 0)
             {
                 foreach (var c in standIn.GetComponents<Collider>())
                     Object.DestroyImmediate(c);
@@ -124,7 +134,10 @@ namespace OpenApparatus.Unity.Editor.Internal
                 if (roomGo == null) continue;
 
                 var room = roomGo.GetComponent<OApparatusRoomManager>();
-                if (room != null) room.Walls = rd.Walls;
+                if (room != null) room.Info = rd;
+
+                var wallsManager = roomGo.Find("Walls")?.GetComponent<OApparatusWallsManager>();
+                if (wallsManager != null) wallsManager.Walls = rd.Walls;
 
                 Tint(roomGo, "Floor", asset.RoomFloorColors, rd.Id);
                 Tint(roomGo, "Walls", asset.RoomWallColors, rd.Id);

@@ -21,7 +21,7 @@ namespace OpenApparatus.Unity.Editor.Importers
     [ScriptedImporter(version: 1, ext: "oapp")]
     public sealed class OApparatusOappImporter : ScriptedImporter
     {
-        public OApparatusColliderMode OApparatusColliderMode = OApparatusColliderMode.None;
+        public OApparatusColliderMode ColliderMode = OApparatusColliderMode.None;
         public OApparatusSubstitutionTable Substitution;
 
         public override void OnImportAsset(AssetImportContext ctx)
@@ -84,7 +84,7 @@ namespace OpenApparatus.Unity.Editor.Importers
             asset.RoomCeilingColors = MapColors(doc.roomCeilingColors);
             asset.RoomWallColors = MapColors(doc.roomSingleWallColors);
 
-            asset.OApparatusColliderMode = OApparatusColliderMode;
+            asset.ColliderMode = ColliderMode;
             asset.Substitution = Substitution;
 
             ctx.AddObjectToAsset("environment", asset);
@@ -187,6 +187,11 @@ namespace OpenApparatus.Unity.Editor.Importers
                         Slot = o.slot,
                         LocalPosition = OApparatusSpace.ToUnity(new Vector3(o.x, o.y, o.z)),
                         LocalRotationY = OApparatusSpace.YawToUnity(o.rotation),
+                        GlobalId = o.globalId,
+                        TypeId = o.typeId,
+                        CustomId = o.customId,
+                        Name = o.name,
+                        OwningRoomId = o.owningRoomId,
                     };
                     if (roomIds.Contains(o.owningRoomId))
                     {

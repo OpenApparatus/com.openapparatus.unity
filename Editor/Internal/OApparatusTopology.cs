@@ -110,7 +110,7 @@ namespace OpenApparatus.Unity.Editor.Internal
                         StartLocal = OApparatusSpace.ToUnity(new Vector3(s.X, 0f, s.Y)),
                         EndLocal = OApparatusSpace.ToUnity(new Vector3(e.X, 0f, e.Y)),
                         NeighbourRoomId = roomIsA ? (adj.RoomB?.Id ?? -1) : adj.RoomA.Id,
-                        OApparatusPassageKind = ToUnityPassageKind(adj.Passage),
+                        PassageKind = ToUnityPassageKind(adj.Passage),
                         Openings = ToOpeningSpecs(adj.Passage),
                     });
                 }
@@ -173,7 +173,7 @@ namespace OpenApparatus.Unity.Editor.Internal
 
         static Passage ToCorePassage(OApparatusWallInfo wall)
         {
-            switch (wall.OApparatusPassageKind)
+            switch (wall.PassageKind)
             {
                 case OApparatusPassageKind.Open:
                     return Passage.Open.Instance;

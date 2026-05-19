@@ -14,7 +14,7 @@ namespace OpenApparatus.Unity.Editor.Importers
         public override void OnEnable()
         {
             base.OnEnable();
-            _colliderMode = serializedObject.FindProperty(nameof(OApparatusOaeImporter.OApparatusColliderMode));
+            _colliderMode = serializedObject.FindProperty(nameof(OApparatusOaeImporter.ColliderMode));
             _substitution = serializedObject.FindProperty(nameof(OApparatusOaeImporter.Substitution));
         }
 

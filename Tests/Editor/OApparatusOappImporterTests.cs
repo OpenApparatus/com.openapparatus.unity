@@ -34,7 +34,7 @@ namespace OpenApparatus.Unity.Tests.Editor
             var asset = AssetDatabase.LoadAssetAtPath<OApparatusAsset>(FixturePath);
             int doorways = 0;
             foreach (var w in asset.Rooms[0].Walls)
-                if (w.OApparatusPassageKind == OApparatusPassageKind.Doorway) doorways++;
+                if (w.PassageKind == OApparatusPassageKind.Doorway) doorways++;
             Assert.AreEqual(1, doorways, "the passage override should produce exactly one doorway");
         }
 

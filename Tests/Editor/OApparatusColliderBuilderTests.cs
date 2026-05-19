@@ -26,7 +26,7 @@ namespace OpenApparatus.Unity.Tests.Editor
             int expectedCeilingColliders)
         {
             var asset = AssetDatabase.LoadAssetAtPath<OApparatusAsset>(FixturePath);
-            asset.OApparatusColliderMode = mode;
+            asset.ColliderMode = mode;
             GameObject root = null;
             try
             {
@@ -50,7 +50,7 @@ namespace OpenApparatus.Unity.Tests.Editor
             finally
             {
                 if (root != null) Object.DestroyImmediate(root);
-                asset.OApparatusColliderMode = OApparatusColliderMode.None;
+                asset.ColliderMode = OApparatusColliderMode.None;
             }
         }
 
@@ -58,7 +58,7 @@ namespace OpenApparatus.Unity.Tests.Editor
         public void Placeholder_KeepsColliderWhenObjectsFlagSet()
         {
             var asset = AssetDatabase.LoadAssetAtPath<OApparatusAsset>(FixturePath);
-            asset.OApparatusColliderMode = OApparatusColliderMode.Objects;
+            asset.ColliderMode = OApparatusColliderMode.Objects;
             GameObject root = null;
             try
             {
@@ -71,7 +71,7 @@ namespace OpenApparatus.Unity.Tests.Editor
             finally
             {
                 if (root != null) Object.DestroyImmediate(root);
-                asset.OApparatusColliderMode = OApparatusColliderMode.None;
+                asset.ColliderMode = OApparatusColliderMode.None;
             }
         }
 
@@ -79,7 +79,7 @@ namespace OpenApparatus.Unity.Tests.Editor
         public void Placeholder_DropsColliderWhenObjectsFlagOff()
         {
             var asset = AssetDatabase.LoadAssetAtPath<OApparatusAsset>(FixturePath);
-            asset.OApparatusColliderMode = OApparatusColliderMode.None;
+            asset.ColliderMode = OApparatusColliderMode.None;
             GameObject root = null;
             try
             {
@@ -99,7 +99,7 @@ namespace OpenApparatus.Unity.Tests.Editor
         public void SubstitutedPrefab_ColliderIsPrefabAuthorsChoice()
         {
             var asset = AssetDatabase.LoadAssetAtPath<OApparatusAsset>(FixturePath);
-            asset.OApparatusColliderMode = OApparatusColliderMode.Objects;  // Should not influence prefabs.
+            asset.ColliderMode = OApparatusColliderMode.Objects;  // Should not influence prefabs.
 
             // Bare prefab with no collider — substitution should NOT add one.
             var bare = new GameObject("BarePrefab", typeof(MeshFilter), typeof(MeshRenderer));
@@ -126,7 +126,7 @@ namespace OpenApparatus.Unity.Tests.Editor
                 Object.DestroyImmediate(bare);
                 asset.Substitution = null;
                 Object.DestroyImmediate(table);
-                asset.OApparatusColliderMode = OApparatusColliderMode.None;
+                asset.ColliderMode = OApparatusColliderMode.None;
             }
         }
     }

@@ -72,5 +72,11 @@ namespace OpenApparatus.Unity.Editor.Importers
         public float y;
         public float z;
         public float rotation;
+
+        // Identity strings authored in Studio.
+        public string globalId;
+        public string typeId;
+        public string customId;
+        public string name;
     }
 }

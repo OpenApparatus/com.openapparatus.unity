@@ -22,6 +22,6 @@ namespace OpenApparatus.Unity.Editor.Internal
 
         /// <summary>Optional per-part / per-name material assignments. Null falls
         /// back to <see cref="OApparatusMaterialResolver"/>'s authored or synthesized defaults.</summary>
-        public OApparatusMaterialOverrides OApparatusMaterialOverrides;
+        public OApparatusMaterialOverrides MaterialOverrides;
     }
 }

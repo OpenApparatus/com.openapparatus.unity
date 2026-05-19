@@ -90,6 +90,13 @@ namespace OpenApparatus.Unity.Editor.Importers
         public int slot { get; set; }
         public List<float> position { get; set; }
         public float rotation { get; set; }
+
+        // Identity strings authored in Studio. Newtonsoft matches case-
+        // insensitively, so these bind whether the JSON uses camel or Pascal.
+        public string globalId { get; set; }
+        public string typeId { get; set; }
+        public string customId { get; set; }
+        public string name { get; set; }
     }
 
     internal sealed class OApparatusOaeOutside

@@ -16,7 +16,7 @@ namespace OpenApparatus.Unity.Editor.Importers
     {
         // Spawn-time settings persisted on the importer so they survive reimport.
         // Editable via OApparatusOaeImporterEditor (top "Import Settings" section).
-        public OApparatusColliderMode OApparatusColliderMode = OApparatusColliderMode.None;
+        public OApparatusColliderMode ColliderMode = OApparatusColliderMode.None;
         public OApparatusSubstitutionTable Substitution;
 
         public override void OnImportAsset(AssetImportContext ctx)
@@ -55,7 +55,7 @@ namespace OpenApparatus.Unity.Editor.Importers
             asset.GridWidth = doc.grid?.width ?? 0;
             asset.GridLength = doc.grid?.length ?? 0;
             asset.RoomGrid = FlattenGrid(doc.grid);
-            asset.OApparatusColliderMode = OApparatusColliderMode;
+            asset.ColliderMode = ColliderMode;
             asset.Substitution = Substitution;
 
             ctx.AddObjectToAsset("environment", asset);
@@ -169,7 +169,7 @@ namespace OpenApparatus.Unity.Editor.Importers
                     StartLocal = OApparatusSpace.ToUnity(startStudio),
                     EndLocal = OApparatusSpace.ToUnity(endStudio),
                     NeighbourRoomId = w.neighborRoomId ?? -1,
-                    OApparatusPassageKind = ParsePassageKind(w.passage?.type),
+                    PassageKind = ParsePassageKind(w.passage?.type),
                     Openings = MapOpenings(w.passage?.openings),
                 };
             }
@@ -218,6 +218,10 @@ namespace OpenApparatus.Unity.Editor.Importers
                     Slot = o.slot,
                     LocalPosition = OApparatusSpace.ToUnity(studioPos),
                     LocalRotationY = OApparatusSpace.YawToUnity(o.rotation),
+                    GlobalId = o.globalId,
+                    TypeId = o.typeId,
+                    CustomId = o.customId,
+                    Name = o.name,
                 };
             }
             return result;

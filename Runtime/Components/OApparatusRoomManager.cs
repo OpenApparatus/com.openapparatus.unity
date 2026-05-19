@@ -5,19 +5,21 @@ namespace OpenApparatus.Unity
 {
     /// <summary>
     /// Identifies a spawned room and exposes a scripting API for re-skinning it
-    /// and placing objects against its walls. Custom researcher scripts start
-    /// from <see cref="OApparatusRootManager"/> and drill in via these methods.
+    /// and placing objects against its walls. Carries the room's
+    /// <see cref="OApparatusRoomInfo"/>, filled by the spawn pipeline. Custom
+    /// researcher scripts start from <see cref="OApparatusRootManager"/> and
+    /// drill in via these methods.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class OApparatusRoomManager : MonoBehaviour
     {
-        public int RoomId;
-        public RoomType RoomType;
-        public Vector2 GridPositionStudio;
-        public Vector2Int[] TileIndices;
+        public OApparatusRoomInfo Info = new OApparatusRoomInfo();
+
+        public int RoomId => Info != null ? Info.Id : -1;
+        public RoomType RoomType => Info != null ? Info.RoomType : default;
 
         /// <summary>This room's walls, each described from the room's interior side.</summary>
-        public OApparatusWallInfo[] Walls;
+        public OApparatusWallInfo[] Walls => Info != null ? Info.Walls : null;
 
         // --- Re-skinning ---
 
@@ -40,10 +42,11 @@ namespace OpenApparatus.Unity
         public GameObject AddObjectToWall(int wallIndex, float distanceMetres,
                                           float heightMetres, GameObject prefab)
         {
-            if (prefab == null || Walls == null || wallIndex < 0 || wallIndex >= Walls.Length)
+            var walls = Walls;
+            if (prefab == null || walls == null || wallIndex < 0 || wallIndex >= walls.Length)
                 return null;
 
-            var wall = Walls[wallIndex];
+            var wall = walls[wallIndex];
             var delta = wall.EndLocal - wall.StartLocal;
             float length = delta.magnitude;
             if (length < 1e-4f) return null;
@@ -67,11 +70,12 @@ namespace OpenApparatus.Unity
         // a rectangular room enclosed by its outer walls.
         Vector3 InteriorCentroid()
         {
-            if (Walls == null || Walls.Length == 0) return Vector3.zero;
+            var walls = Walls;
+            if (walls == null || walls.Length == 0) return Vector3.zero;
             var sum = Vector3.zero;
-            foreach (var w in Walls)
+            foreach (var w in walls)
                 sum += (w.StartLocal + w.EndLocal) * 0.5f;
-            return sum / Walls.Length;
+            return sum / walls.Length;
         }
 
         void TintPart(string partName, Color color)

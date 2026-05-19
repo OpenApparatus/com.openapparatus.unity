@@ -22,7 +22,7 @@ namespace OpenApparatus.Unity.Editor.Inspectors
                 foreach (var r in asset.Rooms) objectCount += r.Objects?.Length ?? 0;
             EditorGUILayout.LabelField("Objects", objectCount.ToString());
             EditorGUILayout.LabelField("Object slots", (asset.ObjectSlots?.Length ?? 0).ToString());
-            EditorGUILayout.LabelField("Collider mode", asset.OApparatusColliderMode.ToString());
+            EditorGUILayout.LabelField("Collider mode", asset.ColliderMode.ToString());
             EditorGUILayout.LabelField("Substitution table",
                 asset.Substitution != null ? asset.Substitution.name : "(none)");
 

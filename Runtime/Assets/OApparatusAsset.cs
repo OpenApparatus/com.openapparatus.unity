@@ -48,7 +48,7 @@ namespace OpenApparatus.Unity
 
         [SerializeField] private List<OApparatusRoomMeshEntry> _roomMeshes = new List<OApparatusRoomMeshEntry>();
 
-        public OApparatusColliderMode OApparatusColliderMode = OApparatusColliderMode.None;
+        public OApparatusColliderMode ColliderMode = OApparatusColliderMode.None;
         public OApparatusSubstitutionTable Substitution;
 
         public Mesh GetRoomMesh(int roomId)
