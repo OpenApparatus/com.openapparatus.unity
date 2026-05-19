@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using OpenApparatus.Geometry;
 using OpenApparatus.Topology;
@@ -125,12 +126,24 @@ namespace OpenApparatus.Unity.Editor.Internal
                                       new[] { tris });
             var mesh = OApparatusMeshAdapter.ToUnityMesh(single, materialName, mirrorX: true);
 
+            // Generated meshes carry only UV0, which is not a clean unwrap;
+            // baked lightmapping needs a non-overlapping UV2. Generate one so
+            // the bake comes out without seams or light bleed.
+            Unwrapping.GenerateSecondaryUVSet(mesh);
+
             var go = new GameObject(name);
             go.transform.SetParent(parent, worldPositionStays: false);
             go.AddComponent<MeshFilter>().sharedMesh = mesh;
             var mr = go.AddComponent<MeshRenderer>();
             mr.sharedMaterial = OApparatusMaterialResolver.Resolve(materialName, opts.MaterialOverrides);
             mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
+
+            // The shell geometry is static — mark it so each regenerate is
+            // bake-ready without re-flagging the parts by hand.
+            GameObjectUtility.SetStaticEditorFlags(go,
+                StaticEditorFlags.ContributeGI | StaticEditorFlags.BatchingStatic |
+                StaticEditorFlags.OccluderStatic | StaticEditorFlags.OccludeeStatic |
+                StaticEditorFlags.ReflectionProbeStatic);
 
             // The combined Walls part carries the room's per-wall data; the
             // spawner fills it once the imported room info is available.
