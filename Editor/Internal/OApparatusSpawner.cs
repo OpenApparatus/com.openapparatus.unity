@@ -24,17 +24,21 @@ namespace OpenApparatus.Unity.Editor.Internal
             var rootComponent = root.GetComponent<OApparatusRootManager>();
             if (rootComponent != null) rootComponent.Asset = asset;
 
-            SpawnObjects(root.transform, asset);
+            // A generating config may override the source asset's collider mode.
+            var colliderMode = options.ColliderMode ?? asset.ColliderMode;
+
+            SpawnObjects(root.transform, asset, colliderMode);
             ConfigureRooms(root.transform, asset);
 
             OApparatusSubstitutionApplicator.Apply(root, asset.Substitution, asset.ObjectSlots);
-            OApparatusColliderBuilder.Apply(root, asset.ColliderMode, asset.Parameters);
+            OApparatusColliderBuilder.Apply(root, colliderMode, asset.Parameters);
 
             Undo.RegisterCreatedObjectUndo(root, "Spawn OpenApparatus environment");
             return root;
         }
 
-        static void SpawnObjects(Transform root, OApparatusAsset asset)
+        static void SpawnObjects(Transform root, OApparatusAsset asset,
+                                 OApparatusColliderMode colliderMode)
         {
             if (asset.Rooms != null)
             {
@@ -44,7 +48,7 @@ namespace OpenApparatus.Unity.Editor.Internal
                     var roomGo = root.Find($"Room_{rd.Id}");
                     var parent = roomGo != null ? roomGo : root;
                     foreach (var od in rd.Objects)
-                        SpawnObject(parent, od, rd.Id, asset);
+                        SpawnObject(parent, od, rd.Id, asset, colliderMode);
                 }
             }
 
@@ -53,12 +57,12 @@ namespace OpenApparatus.Unity.Editor.Internal
                 var outside = new GameObject("Outside");
                 outside.transform.SetParent(root, worldPositionStays: false);
                 foreach (var od in asset.OutsideObjects)
-                    SpawnObject(outside.transform, od, -1, asset);
+                    SpawnObject(outside.transform, od, -1, asset, colliderMode);
             }
         }
 
         static void SpawnObject(Transform parent, OApparatusObjectInfo od, int owningRoomId,
-                                OApparatusAsset asset)
+                                OApparatusAsset asset, OApparatusColliderMode colliderMode)
         {
             var slot = ResolveSlot(asset.ObjectSlots, od.Slot);
 
@@ -96,7 +100,7 @@ namespace OpenApparatus.Unity.Editor.Internal
 
             // CreatePrimitive auto-attaches a Collider. The Objects flag controls
             // whether the stand-in keeps it; substituted prefabs are untouched.
-            if ((asset.ColliderMode & OApparatusColliderMode.Objects) == 0)
+            if ((colliderMode & OApparatusColliderMode.Objects) == 0)
             {
                 foreach (var c in standIn.GetComponents<Collider>())
                     Object.DestroyImmediate(c);

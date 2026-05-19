@@ -23,5 +23,9 @@ namespace OpenApparatus.Unity.Editor.Internal
         /// <summary>Optional per-part / per-name material assignments. Null falls
         /// back to <see cref="OApparatusMaterialResolver"/>'s authored or synthesized defaults.</summary>
         public OApparatusMaterialOverrides MaterialOverrides;
+
+        /// <summary>Which generated parts receive mesh colliders. Null falls back
+        /// to the source asset's <see cref="OApparatusAsset.ColliderMode"/>.</summary>
+        public OApparatusColliderMode? ColliderMode;
     }
 }

@@ -22,6 +22,10 @@ namespace OpenApparatus.Unity
         public bool GenerateWalls = true;
         public bool GenerateExteriorWalls = true;
 
+        [Tooltip("Which generated parts receive mesh colliders. Replaces the " +
+                 "source asset's collider mode when this config generates a prefab.")]
+        public OApparatusColliderMode ColliderMode = OApparatusColliderMode.All;
+
         [Tooltip("OApparatusRoomManager id to centre the apparatus on; -1 leaves the source origin.")]
         public int OriginRoomId = -1;
 

@@ -26,6 +26,7 @@ namespace OpenApparatus.Unity.Editor.Internal
                 GenerateCeilings = config.GenerateCeilings,
                 GenerateWalls = config.GenerateWalls,
                 GenerateExteriorWalls = config.GenerateExteriorWalls,
+                ColliderMode = config.ColliderMode,
             };
             var root = OApparatusSpawner.Spawn(config.Source, options);
             if (root == null) return null;
